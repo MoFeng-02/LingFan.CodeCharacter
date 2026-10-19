@@ -30,52 +30,76 @@ export const humanoidPack: CharacterPack = {
     {
       name: SLOT.turn,
       direction: "input",
-      defaultValue: DEFAULTS.turn,
-      range: RANGES.turn,
+      defaultValue: DEFAULTS[SLOT.turn],
+      range: RANGES[SLOT.turn],
     },
     {
       name: SLOT.smile,
       direction: "input",
-      defaultValue: DEFAULTS.smile,
-      range: RANGES.smile,
+      defaultValue: DEFAULTS[SLOT.smile],
+      range: RANGES[SLOT.smile],
     },
     {
       name: SLOT.blink,
       direction: "input",
-      defaultValue: DEFAULTS.blink,
-      range: RANGES.blink,
+      defaultValue: DEFAULTS[SLOT.blink],
+      range: RANGES[SLOT.blink],
     },
     {
       name: SLOT.breath,
       direction: "input",
-      defaultValue: DEFAULTS.breath,
-      range: RANGES.breath,
+      defaultValue: DEFAULTS[SLOT.breath],
+      range: RANGES[SLOT.breath],
     },
     {
       name: SLOT.swing,
       direction: "input",
-      defaultValue: DEFAULTS.swing,
-      range: RANGES.swing,
+      defaultValue: DEFAULTS[SLOT.swing],
+      range: RANGES[SLOT.swing],
     },
     {
       name: SLOT.mouthDrive,
       direction: "input",
-      defaultValue: DEFAULTS.mouthDrive,
-      range: RANGES.mouthDrive,
+      defaultValue: DEFAULTS[SLOT.mouthDrive],
+      range: RANGES[SLOT.mouthDrive],
     },
-    { name: SLOT.headTurn, direction: "output", range: RANGES.headTurn },
-    { name: SLOT.smileWave, direction: "output", range: RANGES.smileWave },
-    { name: SLOT.blinkWave, direction: "output", range: RANGES.blinkWave },
-    { name: SLOT.breathWave, direction: "output", range: RANGES.breathWave },
-    { name: SLOT.swingWave, direction: "output", range: RANGES.swingWave },
-    { name: SLOT.openWave, direction: "output", range: RANGES.openWave },
-    { name: SLOT.cheekLift, direction: "output", range: RANGES.cheekLift },
-    { name: SLOT.eyeSqueeze, direction: "output", range: RANGES.eyeSqueeze },
+    { name: SLOT.headTurn, direction: "output", range: RANGES[SLOT.headTurn] },
+    {
+      name: SLOT.smileWave,
+      direction: "output",
+      range: RANGES[SLOT.smileWave],
+    },
+    {
+      name: SLOT.blinkWave,
+      direction: "output",
+      range: RANGES[SLOT.blinkWave],
+    },
+    {
+      name: SLOT.breathWave,
+      direction: "output",
+      range: RANGES[SLOT.breathWave],
+    },
+    {
+      name: SLOT.swingWave,
+      direction: "output",
+      range: RANGES[SLOT.swingWave],
+    },
+    { name: SLOT.openWave, direction: "output", range: RANGES[SLOT.openWave] },
+    {
+      name: SLOT.cheekLift,
+      direction: "output",
+      range: RANGES[SLOT.cheekLift],
+    },
+    {
+      name: SLOT.eyeSqueeze,
+      direction: "output",
+      range: RANGES[SLOT.eyeSqueeze],
+    },
     ...BASIS_SLOT_KEYS.map((key) => ({
       name: SLOT[key],
       direction: "input" as const,
-      defaultValue: DEFAULTS[key],
-      range: RANGES[key],
+      defaultValue: DEFAULTS[SLOT[key]],
+      range: RANGES[SLOT[key]],
     })),
   ],
   nodes: [
@@ -101,3 +125,4 @@ export const humanoidPack: CharacterPack = {
 
 /** 槽位与节点标识的统一出口：组合根、测试与渲染器按名引用时从这里取。 */
 export { SLOT, DEFAULTS, RANGES, NODE_ID, BASIS_SLOT_KEYS };
+export type { SlotKey, SlotId } from "./shared";

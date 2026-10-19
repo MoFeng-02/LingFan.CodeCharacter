@@ -16,8 +16,6 @@ import type {
 } from "@lingfan-character/contracts";
 import {
   CHARACTER_COORDINATE_SPACE,
-  CompileError,
-  ComputeError,
   createCharacterRuntime,
   validateState,
 } from "@lingfan-character/kernel";
@@ -40,7 +38,14 @@ const node = (
 ): NodeDeclaration => ({ id, reads, writes, step });
 
 /** 基准域包：写节点产出 0.5 加子流微扰，读节点把值翻倍；参数输入槽带缺省与范围。 */
-const basePack = (): CharacterPack => ({
+/** 可变包构造类型：错误注入用例需要增删成员，compile 入参侧再收紧为 CharacterPack。 */
+type WritablePack = {
+  -readonly [K in keyof CharacterPack]: CharacterPack[K] extends readonly (infer T)[]
+    ? T[]
+    : CharacterPack[K];
+};
+
+const basePack = (): WritablePack => ({
   declaration: { id: "demo", version: "0.1.0", families: ["core"] },
   slots: [
     slot("demo.core.level", "input", {
@@ -90,7 +95,7 @@ describe("求值图编译", () => {
 
   it("重复节点标识判为编译错误", () => {
     const pack = basePack();
-    pack.nodes.push(pack.nodes[0]!);
+    pack.nodes = [...pack.nodes, pack.nodes[0]!];
     expectCompileError(pack, "duplicate-node");
   });
 
@@ -102,11 +107,12 @@ describe("求值图编译", () => {
 
   it("两个节点写同一输出槽判为写冲突", () => {
     const pack = basePack();
-    pack.nodes.push(
+    pack.nodes = [
+      ...pack.nodes,
       node("demo.core.rival", [], ["demo.core.out"], () => ({
         values: { "demo.core.out": 0 },
       })),
-    );
+    ];
     expectCompileError(pack, "write-conflict");
   });
 

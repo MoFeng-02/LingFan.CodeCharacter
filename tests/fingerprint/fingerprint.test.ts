@@ -125,7 +125,7 @@ describe("canvas2d 渲染器", () => {
       expect(largeShape.cy).toBe(smallShape.cy);
       expect(largeShape.rx).toBe(smallShape.rx);
       expect(largeShape.ry).toBe(smallShape.ry);
-    } else {
+    } else if (smallShape.kind === "path" && largeShape.kind === "path") {
       const smallPath = smallShape.commands[0];
       const largePath = largeShape.commands[0];
       expect(largePath?.kind === "moveTo" && smallPath?.kind === "moveTo").toBe(
@@ -134,6 +134,8 @@ describe("canvas2d 渲染器", () => {
       expect(largePath?.kind === "moveTo" ? largePath.x : 0).toBe(
         smallPath?.kind === "moveTo" ? smallPath.x : Number.NaN,
       );
+    } else {
+      expect.unreachable("缩放判据只针对椭圆与路径两种形状");
     }
   });
 
@@ -159,7 +161,7 @@ describe("canvas2d 渲染器", () => {
     expect(plan.commands[0]!.composite).toBe("source-over");
     const runtime = createCharacterRuntime(humanoidPack);
     const state = await runtime.computeAt(0);
-    const tint = state.nodes[NODE_ID.hairBack].primitives[0]!.tint;
+    const tint = state.nodes[NODE_ID.hairBack]!.primitives[0]!.tint;
     expect(plan.commands[0]!.fillStyle).toBe(
       `rgba(${Math.round(tint.r * 255)},${Math.round(tint.g * 255)},${Math.round(tint.b * 255)},${tint.a})`,
     );

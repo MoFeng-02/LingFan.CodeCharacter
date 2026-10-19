@@ -32,7 +32,7 @@ const BROW_LEFT = 6;
 const BROW_RIGHT = 12;
 
 const facePrimitives = (state: CharacterState): readonly RenderPrimitive[] =>
-  state.nodes[NODE_ID.face].primitives;
+  state.nodes[NODE_ID.face]?.primitives ?? [];
 
 describe("humanoid 域包", () => {
   it("编译通过：槽位、写集合与拓扑全部合法", () => {
@@ -44,8 +44,8 @@ describe("humanoid 域包", () => {
       if (slot.direction !== "input") continue;
       expect(slot.defaultValue).toBeDefined();
       expect(slot.range).toBeDefined();
-      expect(slot.defaultValue).toBeGreaterThanOrEqual(slot.range.min);
-      expect(slot.defaultValue).toBeLessThanOrEqual(slot.range.max);
+      expect(slot.defaultValue).toBeGreaterThanOrEqual(slot.range!.min);
+      expect(slot.defaultValue).toBeLessThanOrEqual(slot.range!.max);
     }
   });
 
@@ -72,7 +72,7 @@ describe("humanoid 域包", () => {
   it("眨眼节律：眼睑静息收在上缘，周期 60% 处下移越过眼心", async () => {
     const runtime = createCharacterRuntime(humanoidPack);
     const lidCenterY = async (t: number): Promise<number> => {
-      const prim = facePrimitives(await runtime.computeAt(t))[EYELID_LEFT];
+      const prim = facePrimitives(await runtime.computeAt(t))[EYELID_LEFT]!;
       return prim.shape.kind === "ellipse" ? prim.shape.center.y : Number.NaN;
     };
     const openY = await lidCenterY(0);
@@ -117,22 +117,22 @@ describe("humanoid 域包", () => {
     const smiling = facePrimitives(
       await runtime.computeAt(0, { [SLOT.smile]: 1 }),
     );
-    expect(smiling[BLUSH_LEFT].opacity).toBeCloseTo(0.4, 6);
-    expect(neutral[BLUSH_LEFT].opacity).toBe(0);
-    expect(smiling[BLUSH_LEFT].transform.f).toBeLessThan(
-      neutral[BLUSH_LEFT].transform.f,
+    expect(smiling[BLUSH_LEFT]!.opacity).toBeCloseTo(0.4, 6);
+    expect(neutral[BLUSH_LEFT]!.opacity).toBe(0);
+    expect(smiling[BLUSH_LEFT]!.transform.f).toBeLessThan(
+      neutral[BLUSH_LEFT]!.transform.f,
     );
   });
 
   it("呼吸：均匀缩放随呼吸波形起伏且归零后复原", async () => {
     const runtime = createCharacterRuntime(humanoidPack);
     const scaleY = async (breath: number): Promise<number> =>
-      facePrimitives(await runtime.computeAt(0, { [SLOT.breath]: breath }))[0]
+      facePrimitives(await runtime.computeAt(0, { [SLOT.breath]: breath }))[0]!
         .transform.d;
     expect(await scaleY(0)).toBeCloseTo(0.992, 12);
     expect(await scaleY(1)).toBeGreaterThan(1);
     const scaleX = async (breath: number): Promise<number> =>
-      facePrimitives(await runtime.computeAt(0, { [SLOT.breath]: breath }))[0]
+      facePrimitives(await runtime.computeAt(0, { [SLOT.breath]: breath }))[0]!
         .transform.a;
     expect(await scaleX(0)).toBe(await scaleY(0));
   });
@@ -142,7 +142,7 @@ describe("humanoid 域包", () => {
     const bangsE = async (swing: number): Promise<number> =>
       (await runtime.computeAt(0, { [SLOT.swing]: swing })).nodes[
         NODE_ID.hairFront
-      ].primitives[0].transform.e;
+      ]!.primitives[0]!.transform.e;
     expect(Math.abs((await bangsE(1)) - (await bangsE(-1)))).toBeGreaterThan(
       0.01,
     );
@@ -155,7 +155,7 @@ describe("humanoid 域包", () => {
       expect(result.ok).toBe(true);
     }
 
-    const face = state.nodes[NODE_ID.face];
+    const face = state.nodes[NODE_ID.face]!;
     const stretchedFace: NodeState = {
       ...face,
       primitives: face.primitives.map((prim, index) =>
@@ -180,7 +180,7 @@ describe("humanoid 域包", () => {
     };
     expect(validateState(humanoidPack, stretched)[0]?.ok).toBe(false);
 
-    const hairFront = state.nodes[NODE_ID.hairFront];
+    const hairFront = state.nodes[NODE_ID.hairFront]!;
     const driftedHair: NodeState = {
       ...hairFront,
       transform: { ...hairFront.transform, e: hairFront.transform.e + 0.5 },
@@ -201,8 +201,8 @@ describe("humanoid 域包", () => {
   it("口型：静音闭嘴，口腔薄条被唇带覆盖", async () => {
     const runtime = createCharacterRuntime(humanoidPack);
     const state = await runtime.computeAt(1000, { [SLOT.mouthDrive]: 0 });
-    expect(state.nodes[NODE_ID.mouthDrive].params[SLOT.openWave]).toBe(0);
-    const oralCavity = state.nodes[NODE_ID.mouth].primitives[0];
+    expect(state.nodes[NODE_ID.mouthDrive]!.params[SLOT.openWave]).toBe(0);
+    const oralCavity = state.nodes[NODE_ID.mouth]!.primitives[0];
     expect(oralCavity?.shape.kind).toBe("ellipse");
     if (oralCavity?.shape.kind === "ellipse") {
       expect(oralCavity.shape.radiusY).toBeLessThan(0.005);
@@ -213,9 +213,9 @@ describe("humanoid 域包", () => {
     const runtime = createCharacterRuntime(humanoidPack);
     const state = await runtime.computeAt(1000, { [SLOT.mouthDrive]: 1 });
     expect(
-      state.nodes[NODE_ID.mouthDrive].params[SLOT.openWave],
+      state.nodes[NODE_ID.mouthDrive]!.params[SLOT.openWave],
     ).toBeGreaterThan(0.99);
-    const oralCavity = state.nodes[NODE_ID.mouth].primitives[0];
+    const oralCavity = state.nodes[NODE_ID.mouth]!.primitives[0];
     if (oralCavity?.shape.kind === "ellipse") {
       expect(oralCavity.shape.radiusY).toBeGreaterThan(0.018);
     }
@@ -226,7 +226,7 @@ describe("humanoid 域包", () => {
     const openness = async (drive: number): Promise<number> =>
       (await runtime.computeAt(1000, { [SLOT.mouthDrive]: drive })).nodes[
         NODE_ID.mouthDrive
-      ].params[SLOT.openWave]!;
+      ]!.params[SLOT.openWave]!;
     const low = await openness(0.2);
     const mid = await openness(0.6);
     const high = await openness(1);
@@ -320,7 +320,7 @@ describe("humanoid 域包", () => {
     ): Promise<number> => {
       const prim = (await runtime.computeAt(1000, overrides)).nodes[
         NODE_ID.mouth
-      ].primitives[0];
+      ]!.primitives[0]!;
       return prim.shape.kind === "ellipse" ? prim.shape.radiusY : Number.NaN;
     };
     const silent = await oralRy({ [SLOT.mouthDrive]: 0 });
@@ -346,7 +346,7 @@ describe("humanoid 域包", () => {
   it("基越界被钳制并出具报告", async () => {
     const runtime = createCharacterRuntime(humanoidPack);
     const state = await runtime.computeAt(0, { [SLOT.browRaiseL]: 5 });
-    const reports = state.nodes[NODE_ID.face].constraints;
+    const reports = state.nodes[NODE_ID.face]!.constraints ?? [];
     expect(reports.length).toBeGreaterThan(0);
     expect(reports.every((report) => report.clamped)).toBe(true);
     expect(reports.every((report) => report.applied <= 1)).toBe(true);

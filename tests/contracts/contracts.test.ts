@@ -51,7 +51,7 @@ describe("state(t) 状态向量", () => {
       },
     };
     expect(state.tMs).toBe(1200);
-    expect(state.nodes["humanoid.face.head"].primitives).toHaveLength(1);
+    expect(state.nodes["humanoid.face.head"]?.primitives).toHaveLength(1);
   });
 
   it("约束报告记录请求值与钳制后应用值", () => {
@@ -76,7 +76,7 @@ describe("state(t) 状态向量", () => {
         },
       },
     };
-    expect(state.nodes["n"].constraints[0]?.clamped).toBe(true);
+    expect(state.nodes["n"]?.constraints[0]?.clamped).toBe(true);
   });
 });
 
@@ -154,7 +154,8 @@ describe("域包端口与场景联动", () => {
     };
     expect(pack.slots[0]?.name).toBe("humanoid.face.turn");
     expect(
-      pack.nodes[0]?.step({ values: {} }, 1000, { next: () => 0 }).values,
+      pack.nodes[0]?.step({ values: {} }, 1000, { next: () => 0, seed: 1 })
+        .values,
     ).toEqual({
       "humanoid.face.head.pose": 0,
     });

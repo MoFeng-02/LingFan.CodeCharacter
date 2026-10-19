@@ -13,11 +13,17 @@ import type { SlotName } from "@lingfan-character/contracts";
 import { createCharacterRuntime } from "@lingfan-character/kernel";
 import {
   BASIS_SLOT_KEYS,
+  DEFAULTS,
   humanoidPack,
   SLOT,
+  type SlotId,
 } from "@lingfan-character/example-humanoid";
 import { createSpeechEnvelope } from "@lingfan-character/example-humanoid/demo";
-import { buildDrawPlan, draw } from "@lingfan-character/renderer-canvas2d";
+import {
+  buildDrawPlan,
+  draw,
+  type DrawingContext,
+} from "@lingfan-character/renderer-canvas2d";
 import {
   isTransitionDone,
   redirect,
@@ -25,15 +31,47 @@ import {
   type Transition,
 } from "./transition";
 
-/** 画布固定正方形：归一化坐标乘短边即可铺满，无需处理非正方形留白。 */
-const STAGE = 512;
-
 const canvas = document.querySelector<HTMLCanvasElement>("#stage");
 const context = canvas?.getContext("2d");
 const status = document.querySelector<HTMLElement>("#status");
 if (!canvas || !context) {
   throw new Error("找不到画布或 2d 上下文，请确认 index.html 结构完整");
 }
+/** 收窄后的稳定引用：守卫抛错即终止脚本，此后画布与上下文必然存在。 */
+const stage: HTMLCanvasElement = canvas;
+const ctx: CanvasRenderingContext2D = context;
+
+/** DOM 上下文到渲染器最小执行接口的适配：属性写入原样传导到画布。 */
+const drawingTarget: DrawingContext = {
+  get globalCompositeOperation() {
+    return ctx.globalCompositeOperation;
+  },
+  set globalCompositeOperation(value: string) {
+    ctx.globalCompositeOperation = value as GlobalCompositeOperation;
+  },
+  get globalAlpha() {
+    return ctx.globalAlpha;
+  },
+  set globalAlpha(value: number) {
+    ctx.globalAlpha = value;
+  },
+  get fillStyle() {
+    return ctx.fillStyle as string;
+  },
+  set fillStyle(value: string) {
+    ctx.fillStyle = value;
+  },
+  setTransform: (a, b, c, d, e, f) => ctx.setTransform(a, b, c, d, e, f),
+  beginPath: () => ctx.beginPath(),
+  moveTo: (x, y) => ctx.moveTo(x, y),
+  lineTo: (x, y) => ctx.lineTo(x, y),
+  bezierCurveTo: (c1x, c1y, c2x, c2y, x, y) =>
+    ctx.bezierCurveTo(c1x, c1y, c2x, c2y, x, y),
+  closePath: () => ctx.closePath(),
+  ellipse: (x, y, radiusX, radiusY, rotation, startAngle, endAngle) =>
+    ctx.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle),
+  fill: () => ctx.fill(),
+};
 
 const runtime = createCharacterRuntime(humanoidPack);
 
@@ -58,8 +96,11 @@ function nowTMs(): number {
  */
 function beginTransition(slot: SlotName, to: number): void {
   const previous = transitions.get(slot);
-  const fallback = overrides[slot] ?? DEFAULTS[slot] ?? 0;
-  transitions.set(slot, redirect(previous, fallback, to, nowTMs(), "smoothstep"));
+  const fallback = overrides[slot] ?? DEFAULTS[slot as SlotId] ?? 0;
+  transitions.set(
+    slot,
+    redirect(previous, fallback, to, nowTMs(), "smoothstep"),
+  );
 }
 
 /** 每帧推进：过渡窗内写插值，走完固化目标值并清锚点。 */
@@ -139,7 +180,7 @@ function applyExpression(name: string | null): void {
     involved.add(slot);
   }
   for (const slot of involved) {
-    beginTransition(slot, next[slot] ?? DEFAULTS[slot] ?? 0);
+    beginTransition(slot, next[slot] ?? DEFAULTS[slot as SlotId] ?? 0);
   }
   for (const button of expressionButtons) {
     button.classList.toggle("active", button.dataset.expression === name);
@@ -192,12 +233,12 @@ async function frame(now: number): Promise<void> {
     overrides[SLOT.mouthDrive] = speech.at(tMs);
   }
   const state = await runtime.computeAt(tMs, overrides);
-  const scale = Math.min(canvas.width, canvas.height);
+  const scale = Math.min(stage.width, stage.height);
 
-  context.setTransform(1, 0, 0, 1, 0, 0);
-  context.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, stage.width, stage.height);
   const plan = buildDrawPlan(state, scale);
-  draw(context, plan);
+  draw(drawingTarget, plan);
   if (status) {
     status.textContent = `t=${tMs}ms · 绘制指令 ${plan.commands.length} 条`;
   }

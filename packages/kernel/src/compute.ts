@@ -31,13 +31,13 @@ const IDENTITY = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 } as const;
 export interface CharacterRuntime {
   readonly computeAt: (
     tMs: TimeMs,
-    overrides?: Readonly<Record<SlotName, number>>,
+    overrides?: Partial<Record<SlotName, number>>,
   ) => Promise<CharacterState>;
   readonly computeRange: (
     fromMs: TimeMs,
     toMs: TimeMs,
     grid: SampleGrid,
-    overrides?: Readonly<Record<SlotName, number>>,
+    overrides?: Partial<Record<SlotName, number>>,
   ) => Promise<readonly CharacterState[]>;
 }
 
@@ -89,7 +89,7 @@ const clampToRange = (value: number, min: number, max: number): number =>
 const evaluateAt = (
   graph: CompiledGraph,
   tMs: TimeMs,
-  overrides: Readonly<Record<SlotName, number>>,
+  overrides: Partial<Record<SlotName, number>>,
 ): CharacterState => {
   const { pack, slots, order, firstReader, edgeTargets } = graph;
 

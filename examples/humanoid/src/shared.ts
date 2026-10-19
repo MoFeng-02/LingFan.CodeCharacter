@@ -48,11 +48,14 @@ export const SLOT = {
 
 export type SlotKey = keyof typeof SLOT;
 
+/** 完整槽名联合：SLOT 各值的类型，即缺省表与范围表的键。 */
+export type SlotId = (typeof SLOT)[SlotKey];
+
 /**
  * 表情基槽键清单：包装配声明与组合根复位共用同一份键序。
  * 槽名本体以 SLOT 为准，此处只列基空间的键，避免两处各写一份清单。
  */
-export const BASIS_SLOT_KEYS = [
+export const BASIS_SLOT_KEYS: readonly SlotKey[] = [
   "browRaiseL",
   "browRaiseR",
   "browFurrowL",
@@ -75,83 +78,83 @@ export const BASIS_SLOT_KEYS = [
 ] as const satisfies readonly (keyof typeof SLOT)[];
 
 /** 参数槽默认值：呼吸与眨眼的基调取中低档，其余归零。 */
-export const DEFAULTS: Record<SlotKey, number> = {
-  turn: 0,
-  smile: 0.2,
-  blink: 0,
-  breath: 0.35,
-  swing: 0,
-  mouthDrive: 0,
+export const DEFAULTS: Record<SlotId, number> = {
+  [SLOT.turn]: 0,
+  [SLOT.smile]: 0.2,
+  [SLOT.blink]: 0,
+  [SLOT.breath]: 0.35,
+  [SLOT.swing]: 0,
+  [SLOT.mouthDrive]: 0,
 
-  headTurn: 0,
-  smileWave: 0.2,
-  blinkWave: 0,
-  breathWave: 0.35,
-  swingWave: 0,
-  openWave: 0,
+  [SLOT.headTurn]: 0,
+  [SLOT.smileWave]: 0.2,
+  [SLOT.blinkWave]: 0,
+  [SLOT.breathWave]: 0.35,
+  [SLOT.swingWave]: 0,
+  [SLOT.openWave]: 0,
 
-  cheekLift: 0,
-  eyeSqueeze: 0,
+  [SLOT.cheekLift]: 0,
+  [SLOT.eyeSqueeze]: 0,
 
-  browRaiseL: 0,
-  browRaiseR: 0,
-  browFurrowL: 0,
-  browFurrowR: 0,
-  eyeOpenL: 0.5,
-  eyeOpenR: 0.5,
-  gazeX: 0,
-  gazeY: 0,
-  pupilDilate: 0,
-  noseFlareL: 0,
-  noseFlareR: 0,
-  cheekRaiseL: 0,
-  cheekRaiseR: 0,
-  mouthCornerL: 0,
-  mouthCornerR: 0,
-  lipCurlUpper: 0,
-  lipCurlLower: 0,
-  lipCompress: 0,
-  jawOpen: 0,
+  [SLOT.browRaiseL]: 0,
+  [SLOT.browRaiseR]: 0,
+  [SLOT.browFurrowL]: 0,
+  [SLOT.browFurrowR]: 0,
+  [SLOT.eyeOpenL]: 0.5,
+  [SLOT.eyeOpenR]: 0.5,
+  [SLOT.gazeX]: 0,
+  [SLOT.gazeY]: 0,
+  [SLOT.pupilDilate]: 0,
+  [SLOT.noseFlareL]: 0,
+  [SLOT.noseFlareR]: 0,
+  [SLOT.cheekRaiseL]: 0,
+  [SLOT.cheekRaiseR]: 0,
+  [SLOT.mouthCornerL]: 0,
+  [SLOT.mouthCornerR]: 0,
+  [SLOT.lipCurlUpper]: 0,
+  [SLOT.lipCurlLower]: 0,
+  [SLOT.lipCompress]: 0,
+  [SLOT.jawOpen]: 0,
 };
 
 /** 参数槽取值范围：input 钳制、输出钳制与约束校验共用同一张表。 */
-export const RANGES: Partial<Record<SlotKey, { min: number; max: number }>> = {
-  turn: { min: -1, max: 1 },
-  smile: { min: 0, max: 1 },
-  blink: { min: 0, max: 1 },
-  breath: { min: 0, max: 1 },
-  swing: { min: -1, max: 1 },
-  mouthDrive: { min: 0, max: 1 },
+export const RANGES: Partial<Record<SlotId, { min: number; max: number }>> = {
+  [SLOT.turn]: { min: -1, max: 1 },
+  [SLOT.smile]: { min: 0, max: 1 },
+  [SLOT.blink]: { min: 0, max: 1 },
+  [SLOT.breath]: { min: 0, max: 1 },
+  [SLOT.swing]: { min: -1, max: 1 },
+  [SLOT.mouthDrive]: { min: 0, max: 1 },
 
-  headTurn: { min: -1, max: 1 },
-  smileWave: { min: 0, max: 1 },
-  blinkWave: { min: 0, max: 1 },
-  breathWave: { min: 0, max: 1 },
-  swingWave: { min: -1, max: 1 },
-  openWave: { min: 0, max: 1 },
+  [SLOT.headTurn]: { min: -1, max: 1 },
+  [SLOT.smileWave]: { min: 0, max: 1 },
+  [SLOT.blinkWave]: { min: 0, max: 1 },
+  [SLOT.breathWave]: { min: 0, max: 1 },
+  [SLOT.swingWave]: { min: -1, max: 1 },
+  [SLOT.openWave]: { min: 0, max: 1 },
 
-  cheekLift: { min: 0, max: 1 },
-  eyeSqueeze: { min: 0, max: 1 },
+  [SLOT.cheekLift]: { min: 0, max: 1 },
+  [SLOT.eyeSqueeze]: { min: 0, max: 1 },
 
-  browRaiseL: { min: 0, max: 1 },
-  browRaiseR: { min: 0, max: 1 },
-  browFurrowL: { min: 0, max: 1 },
-  browFurrowR: { min: 0, max: 1 },
-  eyeOpenL: { min: 0, max: 1 },
-  eyeOpenR: { min: 0, max: 1 },
-  gazeX: { min: -1, max: 1 },
-  gazeY: { min: -1, max: 1 },
-  pupilDilate: { min: 0, max: 1 },
-  noseFlareL: { min: 0, max: 1 },
-  noseFlareR: { min: 0, max: 1 },
-  cheekRaiseL: { min: 0, max: 1 },
-  cheekRaiseR: { min: 0, max: 1 },
-  mouthCornerL: { min: -1, max: 1 },
-  mouthCornerR: { min: -1, max: 1 },
-  lipCurlUpper: { min: 0, max: 1 },
-  lipCurlLower: { min: 0, max: 1 },
-  lipCompress: { min: 0, max: 1 },
-  jawOpen: { min: 0, max: 1 },
+  [SLOT.browRaiseL]: { min: 0, max: 1 },
+  [SLOT.browRaiseR]: { min: 0, max: 1 },
+  [SLOT.browFurrowL]: { min: 0, max: 1 },
+  [SLOT.browFurrowR]: { min: 0, max: 1 },
+  [SLOT.eyeOpenL]: { min: 0, max: 1 },
+  [SLOT.eyeOpenR]: { min: 0, max: 1 },
+  [SLOT.gazeX]: { min: -1, max: 1 },
+  [SLOT.gazeY]: { min: -1, max: 1 },
+  [SLOT.pupilDilate]: { min: 0, max: 1 },
+  [SLOT.noseFlareL]: { min: 0, max: 1 },
+  [SLOT.noseFlareR]: { min: 0, max: 1 },
+  [SLOT.cheekRaiseL]: { min: 0, max: 1 },
+  [SLOT.cheekRaiseR]: { min: 0, max: 1 },
+  [SLOT.mouthCornerL]: { min: -1, max: 1 },
+  [SLOT.mouthCornerR]: { min: -1, max: 1 },
+  [SLOT.lipCurlUpper]: { min: 0, max: 1 },
+  [SLOT.lipCurlLower]: { min: 0, max: 1 },
+  [SLOT.lipCompress]: { min: 0, max: 1 },
+  [SLOT.jawOpen]: { min: 0, max: 1 },
 };
 
 /**
