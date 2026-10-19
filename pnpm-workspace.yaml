@@ -1,0 +1,9 @@
+# workspace 清单：packages/、packs/、renderers/ 下的目录是包；tests/ 留在根目录、不是包
+packages:
+  - packages/*
+  - packs/*
+  - renderers/*
+
+# 构建脚本白名单：仅 esbuild 需要 postinstall（vitest 依赖链）
+allowBuilds:
+  esbuild: true

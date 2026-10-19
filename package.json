@@ -1,0 +1,25 @@
+{
+  "name": "lingfan-codecharacter",
+  "private": true,
+  "type": "module",
+  "description": "Code Character：契约先行的程序化角色系统（2D/2.5D）。角色的构成、耦合、边界与外观参数全部是确定性程序算出来的，状态经 state(t) 纯数据出口交付。",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm typecheck && pnpm format:check && pnpm lint:rules",
+    "lint:rules": "eslint .",
+    "test:unit": "vitest run",
+    "format": "prettier --write \"packages/**/src/**/*.ts\"",
+    "format:check": "prettier --check \"packages/**/src/**/*.ts\""
+  },
+  "devDependencies": {
+    "eslint": "9.39.4",
+    "prettier": "3.3.3",
+    "tsx": "4.19.0",
+    "typescript": "5.6.2",
+    "typescript-eslint": "8.71.2",
+    "vitest": "2.1.1"
+  }
+}
