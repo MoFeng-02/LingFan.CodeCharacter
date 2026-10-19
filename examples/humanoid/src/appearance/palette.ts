@@ -10,6 +10,7 @@ export const PALETTE = {
   iris: color(0.231, 0.165, 0.122),
   pupil: color(0.098, 0.071, 0.055),
   mouth: color(0.725, 0.416, 0.369),
+  mouthDark: color(0.208, 0.114, 0.106),
   brow: color(0.247, 0.18, 0.133),
   pin: color(0.851, 0.643, 0.255),
 } as const;

@@ -9,11 +9,16 @@ import {
   createCharacterRuntime,
   validateState,
 } from "@lingfan-character/kernel";
+import { createSpeechEnvelope } from "@lingfan-character/example-humanoid/demo";
 import {
   NODE_ID,
   SLOT,
   humanoidPack,
 } from "@lingfan-character/example-humanoid";
+import {
+  buildDrawPlan,
+  fingerprint,
+} from "@lingfan-character/renderer-canvas2d";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -42,13 +47,14 @@ describe("humanoid 域包", () => {
     }
   });
 
-  it("稳态求值：绘制序以四层外观收尾并携带坐标系标识", async () => {
+  it("稳态求值：绘制序以五层外观收尾并携带坐标系标识", async () => {
     const runtime = createCharacterRuntime(humanoidPack);
     const state = await runtime.computeAt(0);
     expect(state.coordinateSpace).toBe(CHARACTER_COORDINATE_SPACE);
-    expect(state.zOrder.slice(-4)).toEqual([
+    expect(state.zOrder.slice(-5)).toEqual([
       NODE_ID.hairBack,
       NODE_ID.face,
+      NODE_ID.mouth,
       NODE_ID.hairFront,
       NODE_ID.accessory,
     ]);
@@ -188,5 +194,70 @@ describe("humanoid 域包", () => {
     const runtime = createCharacterRuntime(humanoidPack);
     const states = await runtime.computeRange(0, 100, { stepMs: 25 });
     expect(states.map((sample) => sample.tMs)).toEqual([0, 25, 50, 75, 100]);
+  });
+
+  it("口型：静音闭嘴，口腔薄条被唇带覆盖", async () => {
+    const runtime = createCharacterRuntime(humanoidPack);
+    const state = await runtime.computeAt(1000, { [SLOT.mouthDrive]: 0 });
+    expect(state.nodes[NODE_ID.mouthDrive].params[SLOT.openWave]).toBe(0);
+    const oralCavity = state.nodes[NODE_ID.mouth].primitives[0];
+    expect(oralCavity?.shape.kind).toBe("ellipse");
+    if (oralCavity?.shape.kind === "ellipse") {
+      expect(oralCavity.shape.radiusY).toBeLessThan(0.005);
+    }
+  });
+
+  it("口型：满驱动张嘴，口腔高度显著且开口度到位", async () => {
+    const runtime = createCharacterRuntime(humanoidPack);
+    const state = await runtime.computeAt(1000, { [SLOT.mouthDrive]: 1 });
+    expect(
+      state.nodes[NODE_ID.mouthDrive].params[SLOT.openWave],
+    ).toBeGreaterThan(0.99);
+    const oralCavity = state.nodes[NODE_ID.mouth].primitives[0];
+    if (oralCavity?.shape.kind === "ellipse") {
+      expect(oralCavity.shape.radiusY).toBeGreaterThan(0.018);
+    }
+  });
+
+  it("口型：开口度对驱动值单调有序", async () => {
+    const runtime = createCharacterRuntime(humanoidPack);
+    const openness = async (drive: number): Promise<number> =>
+      (await runtime.computeAt(1000, { [SLOT.mouthDrive]: drive })).nodes[
+        NODE_ID.mouthDrive
+      ].params[SLOT.openWave]!;
+    const low = await openness(0.2);
+    const mid = await openness(0.6);
+    const high = await openness(1);
+    expect(low).toBeGreaterThan(0);
+    expect(low).toBeLessThan(mid);
+    expect(mid).toBeLessThan(high);
+    expect(high).toBeLessThanOrEqual(1);
+  });
+
+  it("口型：同 seed 同包络序列，驱动变化改变指纹", async () => {
+    const a = createSpeechEnvelope("lip-sync-demo", 30_000);
+    const b = createSpeechEnvelope("lip-sync-demo", 30_000);
+    const c = createSpeechEnvelope("lip-sync-demo-other", 30_000);
+    for (const t of [500, 1300, 2700, 5200]) {
+      expect(a.at(t)).toBe(b.at(t));
+    }
+    const voiced = [500, 1300, 2700, 5200].map((t) => a.at(t));
+    expect(voiced.some((v) => v > 0.5)).toBe(true);
+
+    const runtime = createCharacterRuntime(humanoidPack);
+    const closed = fingerprint(
+      buildDrawPlan(
+        await runtime.computeAt(800, { [SLOT.mouthDrive]: 0 }),
+        512,
+      ),
+    );
+    const open = fingerprint(
+      buildDrawPlan(
+        await runtime.computeAt(800, { [SLOT.mouthDrive]: 0.8 }),
+        512,
+      ),
+    );
+    expect(open).not.toBe(closed);
+    expect(c).not.toBeUndefined();
   });
 });

@@ -3,10 +3,12 @@ import { accessoryNode } from "./appearance/accessory";
 import { faceNode } from "./appearance/face";
 import { hairBackNode } from "./appearance/hairBack";
 import { hairFrontNode } from "./appearance/hairFront";
+import { mouthNode } from "./appearance/mouth";
 import { humanoidValidations } from "./constraints";
 import { smileChainNode } from "./coupling/smileChain";
 import { blinkNode } from "./params/blink";
 import { breathNode } from "./params/breath";
+import { mouthDriveNode } from "./params/mouthDrive";
 import { smileNode } from "./params/smile";
 import { swingNode } from "./params/swing";
 import { turnNode } from "./params/turn";
@@ -14,8 +16,8 @@ import { NODE_ID } from "./nodes";
 import { DEFAULTS, RANGES, SLOT } from "./shared";
 
 /**
- * v0 半写实头像域包：五参数 / 一条耦合链 / 四层外观 / 两条约束。
- * 绘制序 = 节点声明序：后发 → 脸 → 前发 → 饰品；
+ * 半写实头像域包：六参数 / 一条耦合链 / 五层外观 / 两条约束。
+ * 绘制序 = 节点声明序：后发 → 脸 → 嘴 → 前发 → 饰品；
  * 参数与耦合节点不产出像素，声明位置不影响合成。
  */
 export const humanoidPack: CharacterPack = {
@@ -55,11 +57,18 @@ export const humanoidPack: CharacterPack = {
       defaultValue: DEFAULTS.swing,
       range: RANGES.swing,
     },
+    {
+      name: SLOT.mouthDrive,
+      direction: "input",
+      defaultValue: DEFAULTS.mouthDrive,
+      range: RANGES.mouthDrive,
+    },
     { name: SLOT.headTurn, direction: "output", range: RANGES.headTurn },
     { name: SLOT.smileWave, direction: "output", range: RANGES.smileWave },
     { name: SLOT.blinkWave, direction: "output", range: RANGES.blinkWave },
     { name: SLOT.breathWave, direction: "output", range: RANGES.breathWave },
     { name: SLOT.swingWave, direction: "output", range: RANGES.swingWave },
+    { name: SLOT.openWave, direction: "output", range: RANGES.openWave },
     { name: SLOT.cheekLift, direction: "output", range: RANGES.cheekLift },
     { name: SLOT.eyeSqueeze, direction: "output", range: RANGES.eyeSqueeze },
   ],
@@ -69,9 +78,11 @@ export const humanoidPack: CharacterPack = {
     blinkNode,
     breathNode,
     swingNode,
+    mouthDriveNode,
     smileChainNode,
     hairBackNode,
     faceNode,
+    mouthNode,
     hairFrontNode,
     accessoryNode,
   ],

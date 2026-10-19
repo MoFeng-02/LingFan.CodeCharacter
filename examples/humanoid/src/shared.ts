@@ -11,12 +11,14 @@ export const SLOT = {
   blink: "humanoid.params.blink",
   breath: "humanoid.params.breath",
   swing: "humanoid.params.swing",
+  mouthDrive: "humanoid.params.mouth-drive",
 
   headTurn: "humanoid.motion.head-turn",
   smileWave: "humanoid.face.smile-wave",
   blinkWave: "humanoid.face.blink-wave",
   breathWave: "humanoid.body.breath-wave",
   swingWave: "humanoid.hair.swing-wave",
+  openWave: "humanoid.mouth.open-wave",
 
   cheekLift: "humanoid.face.cheek-lift",
   eyeSqueeze: "humanoid.face.eye-squeeze",
@@ -31,12 +33,14 @@ export const DEFAULTS: Record<SlotKey, number> = {
   blink: 0,
   breath: 0.35,
   swing: 0,
+  mouthDrive: 0,
 
   headTurn: 0,
   smileWave: 0.2,
   blinkWave: 0,
   breathWave: 0.35,
   swingWave: 0,
+  openWave: 0,
 
   cheekLift: 0,
   eyeSqueeze: 0,
@@ -49,12 +53,14 @@ export const RANGES: Partial<Record<SlotKey, { min: number; max: number }>> = {
   blink: { min: 0, max: 1 },
   breath: { min: 0, max: 1 },
   swing: { min: -1, max: 1 },
+  mouthDrive: { min: 0, max: 1 },
 
   headTurn: { min: -1, max: 1 },
   smileWave: { min: 0, max: 1 },
   blinkWave: { min: 0, max: 1 },
   breathWave: { min: 0, max: 1 },
   swingWave: { min: -1, max: 1 },
+  openWave: { min: 0, max: 1 },
 
   cheekLift: { min: 0, max: 1 },
   eyeSqueeze: { min: 0, max: 1 },

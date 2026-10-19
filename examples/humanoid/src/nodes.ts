@@ -7,9 +7,11 @@ export const NODE_ID = {
   blink: "params.blink",
   breath: "params.breath",
   swing: "params.swing",
+  mouthDrive: "params.mouth-drive",
   smileChain: "coupling.smile-chain",
   hairBack: "appearance.hair-back",
   face: "appearance.face",
+  mouth: "appearance.mouth",
   hairFront: "appearance.hair-front",
   accessory: "appearance.accessory",
 } as const satisfies Record<string, NodeId>;

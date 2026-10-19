@@ -4,12 +4,12 @@ import type {
 } from "@lingfan-character/contracts";
 import { NODE_ID } from "../nodes";
 import { SLOT } from "../shared";
-import { clamp, ellipse, fillPath, multiply, pt, translate } from "./geometry";
+import { clamp, ellipse, multiply, pt, translate } from "./geometry";
 import { headTransform } from "./headMotion";
 import { PALETTE } from "./palette";
 
 /**
- * 脸部节点：脸基形、五官与腮红，全部程序生成。
+ * 脸部节点：脸基形、眉眼与腮红，全部程序生成；嘴部独立成节点。
  * 转头是朝向视差：特征向转向侧扫动且按深度分档（鼻 > 五官 > 脸缘），
  * 同组特征转向侧位移略大，脸基形可见宽度随朝向收窄；不做整头旋转。
  * 眼睛由眼白、虹膜、瞳孔与上眼睑构成，眨眼是眼睑下移的物理遮挡，
@@ -130,35 +130,6 @@ export const faceNode: NodeDeclaration = {
         ),
       );
     }
-
-    // 嘴：月牙形，微笑加大宽度、上挑嘴角并加深下缘弧度。
-    const lx = 0.465 - smile * 0.008;
-    const rxp = 0.535 + smile * 0.008;
-    const cornerY = 0.575 - smile * 0.012;
-    const dip = 0.588 + smile * 0.01;
-    primitives.push(
-      fillPath(
-        NODE_ID.face,
-        [
-          { kind: "moveTo", point: pt(lx, cornerY) },
-          {
-            kind: "bezierCurveTo",
-            control1: pt(0.48, dip),
-            control2: pt(0.52, dip),
-            point: pt(rxp, cornerY),
-          },
-          {
-            kind: "bezierCurveTo",
-            control1: pt(0.52, 0.577 + smile * 0.004),
-            control2: pt(0.48, 0.577 + smile * 0.004),
-            point: pt(lx, cornerY),
-          },
-          { kind: "closePath" },
-        ],
-        multiply(head, translate(turn * 0.024, 0)),
-        PALETTE.mouth,
-      ),
-    );
 
     return { values: {}, primitives };
   },

@@ -7,6 +7,7 @@
       "@lingfan-character/kernel": ["packages/kernel/src/index.ts"],
       "@lingfan-character/primitives": ["packages/primitives/src/index.ts"],
       "@lingfan-character/example-humanoid": ["examples/humanoid/src/index.ts"],
+      "@lingfan-character/example-humanoid/demo": ["examples/humanoid/src/demo/index.ts"],
       "@lingfan-character/renderer-canvas2d": ["renderers/canvas2d/src/index.ts"]
     }
   },

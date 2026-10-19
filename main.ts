@@ -12,6 +12,7 @@
 import type { SlotName } from "@lingfan-character/contracts";
 import { createCharacterRuntime } from "@lingfan-character/kernel";
 import { humanoidPack, SLOT } from "@lingfan-character/example-humanoid";
+import { createSpeechEnvelope } from "@lingfan-character/example-humanoid/demo";
 import { buildDrawPlan, draw } from "@lingfan-character/renderer-canvas2d";
 
 /** 画布固定正方形：归一化坐标乘短边即可铺满，无需处理非正方形留白。 */
@@ -46,11 +47,29 @@ function wireControls(): void {
 
 let epoch: number | null = null;
 
+/**
+ * 说话开关：开启时每帧把包络值写进嘴部驱动槽，关闭时撤掉覆盖。
+ * 驱动值是场景→角色的入向数据，角色配方不感知「说话」概念。
+ */
+const speakButton = document.querySelector<HTMLButtonElement>("#speak");
+const speech = createSpeechEnvelope("lip-sync-demo", 300_000);
+let speaking = false;
+speakButton?.addEventListener("click", () => {
+  speaking = !speaking;
+  speakButton.textContent = speaking ? "停止说话" : "开始说话";
+  if (!speaking) {
+    delete overrides[SLOT.mouthDrive];
+  }
+});
+
 async function frame(now: number): Promise<void> {
   if (epoch === null) {
     epoch = now;
   }
   const tMs = now - epoch;
+  if (speaking) {
+    overrides[SLOT.mouthDrive] = speech.at(tMs);
+  }
   const state = await runtime.computeAt(tMs, overrides);
   const scale = Math.min(canvas.width, canvas.height);
 
