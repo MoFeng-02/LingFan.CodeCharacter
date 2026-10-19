@@ -11,8 +11,8 @@
     "lint": "pnpm typecheck && pnpm format:check && pnpm lint:rules",
     "lint:rules": "eslint .",
     "test:unit": "vitest run",
-    "format": "prettier --write \"packages/**/src/**/*.ts\" \"packs/**/src/**/*.ts\" \"tests/**/*.ts\"",
-    "format:check": "prettier --check \"packages/**/src/**/*.ts\" \"packs/**/src/**/*.ts\" \"tests/**/*.ts\""
+    "format": "prettier --write \"packages/**/src/**/*.ts\" \"packs/**/src/**/*.ts\" \"renderers/**/src/**/*.ts\" \"tests/**/*.ts\"",
+    "format:check": "prettier --check \"packages/**/src/**/*.ts\" \"packs/**/src/**/*.ts\" \"renderers/**/src/**/*.ts\" \"tests/**/*.ts\""
   },
   "devDependencies": {
     "eslint": "9.39.4",
@@ -26,6 +26,7 @@
     "@lingfan-character/contracts": "workspace:*",
     "@lingfan-character/kernel": "workspace:*",
     "@lingfan-character/pack-humanoid": "workspace:*",
-    "@lingfan-character/primitives": "workspace:*"
+    "@lingfan-character/primitives": "workspace:*",
+    "@lingfan-character/renderer-canvas2d": "workspace:*"
   }
 }

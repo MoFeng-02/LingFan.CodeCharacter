@@ -20,6 +20,9 @@ importers:
       '@lingfan-character/primitives':
         specifier: workspace:*
         version: link:packages/primitives
+      '@lingfan-character/renderer-canvas2d':
+        specifier: workspace:*
+        version: link:renderers/canvas2d
     devDependencies:
       eslint:
         specifier: 9.39.4
@@ -69,6 +72,12 @@ importers:
       '@lingfan-character/primitives':
         specifier: workspace:*
         version: link:../../packages/primitives
+
+  renderers/canvas2d:
+    dependencies:
+      '@lingfan-character/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
 
 packages:
 
