@@ -11,7 +11,11 @@
 
 import type { SlotName } from "@lingfan-character/contracts";
 import { createCharacterRuntime } from "@lingfan-character/kernel";
-import { humanoidPack, SLOT } from "@lingfan-character/example-humanoid";
+import {
+  BASIS_SLOT_KEYS,
+  humanoidPack,
+  SLOT,
+} from "@lingfan-character/example-humanoid";
 import { createSpeechEnvelope } from "@lingfan-character/example-humanoid/demo";
 import { buildDrawPlan, draw } from "@lingfan-character/renderer-canvas2d";
 
@@ -43,6 +47,79 @@ function wireControls(): void {
     input.addEventListener("input", apply);
     apply();
   }
+}
+
+/**
+ * 表情预设：基系数向量——演示基空间的组合表达，一键写入一组基槽覆盖。
+ * 预设只是组合示例，不构成「表情名列表」语义；连续微调仍走基滑杆。
+ */
+const EXPRESSIONS: Record<string, Partial<Record<SlotName, number>>> = {
+  惊讶: {
+    [SLOT.browRaiseL]: 1,
+    [SLOT.browRaiseR]: 1,
+    [SLOT.eyeOpenL]: 1,
+    [SLOT.eyeOpenR]: 1,
+    [SLOT.jawOpen]: 0.7,
+    [SLOT.pupilDilate]: 0.6,
+  },
+  将笑未笑: {
+    [SLOT.mouthCornerL]: 0.55,
+    [SLOT.mouthCornerR]: 0.45,
+    [SLOT.cheekRaiseL]: 0.5,
+    [SLOT.cheekRaiseR]: 0.4,
+  },
+  皱眉: {
+    [SLOT.browFurrowL]: 0.9,
+    [SLOT.browFurrowR]: 0.9,
+    [SLOT.mouthCornerL]: -0.4,
+    [SLOT.mouthCornerR]: -0.4,
+    [SLOT.lipCompress]: 0.5,
+  },
+  单挑眉: {
+    [SLOT.browRaiseL]: 1,
+    [SLOT.eyeOpenL]: 0.85,
+    [SLOT.eyeOpenR]: 0.5,
+  },
+};
+
+let activeExpression: string | null = null;
+const expressionButtons = document.querySelectorAll<HTMLButtonElement>(
+  "#expressions button[data-expression]",
+);
+
+/** 应用预设：先撤旧预设涉及的槽再写新值；null 表示全部清除。 */
+function applyExpression(name: string | null): void {
+  if (activeExpression !== null) {
+    for (const slot of Object.keys(EXPRESSIONS[activeExpression] ?? {})) {
+      delete overrides[slot as SlotName];
+    }
+  }
+  activeExpression = name;
+  if (name !== null) {
+    Object.assign(overrides, EXPRESSIONS[name]);
+  }
+  for (const button of expressionButtons) {
+    button.classList.toggle("active", button.dataset.expression === name);
+  }
+}
+
+/** 表情预设与复位按钮接线：同按钮再点即取消。 */
+function wireExpressions(): void {
+  for (const button of expressionButtons) {
+    const name = button.dataset.expression;
+    if (!name) continue;
+    button.addEventListener("click", () =>
+      applyExpression(name === activeExpression ? null : name),
+    );
+  }
+  document
+    .querySelector<HTMLButtonElement>("#expressions .reset")
+    ?.addEventListener("click", () => {
+      applyExpression(null);
+      for (const key of BASIS_SLOT_KEYS) {
+        delete overrides[SLOT[key]];
+      }
+    });
 }
 
 let epoch: number | null = null;
@@ -85,6 +162,7 @@ async function frame(now: number): Promise<void> {
 }
 
 wireControls();
+wireExpressions();
 
 // 首帧同步绘制：页面加载立即可见；后续帧由 requestAnimationFrame 驱动，
 // 后台标签页被节流时画面静置但不会全空。

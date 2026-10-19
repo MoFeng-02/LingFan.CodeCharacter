@@ -43,6 +43,25 @@
       #panel input[type="range"] {
         width: 110px;
       }
+      #expressions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      #expressions button {
+        font-size: 13px;
+        padding: 4px 14px;
+        border-radius: 8px;
+        border: 1px solid #2a323c;
+        background: #1c232c;
+        color: #d8dee6;
+        cursor: pointer;
+      }
+      #expressions button.active {
+        border-color: #5b8fd9;
+        color: #ffffff;
+      }
     </style>
   </head>
   <body>
@@ -69,11 +88,34 @@
           <input type="range" min="-1" max="1" step="0.01" value="0"
                  data-param="humanoid.params.swing" />
         </label>
+        <label>视线横
+          <input type="range" min="-1" max="1" step="0.01" value="0"
+                 data-param="humanoid.face.gaze-x" />
+        </label>
+        <label>视线竖
+          <input type="range" min="-1" max="1" step="0.01" value="0"
+                 data-param="humanoid.face.gaze-y" />
+        </label>
+        <label>下颌
+          <input type="range" min="0" max="1" step="0.01" value="0"
+                 data-param="humanoid.mouth.jaw-open" />
+        </label>
+        <label>睁眼
+          <input type="range" min="0" max="1" step="0.01" value="0.5"
+                 data-param="humanoid.face.eye-open-l" />
+        </label>
         <button id="speak" type="button"
                 style="font-size: 13px; padding: 4px 14px; border-radius: 8px;
                        border: 1px solid #2a323c; background: #1c232c; color: #d8dee6;">
           开始说话
         </button>
+      </section>
+      <section id="expressions">
+        <button type="button" data-expression="惊讶">惊讶</button>
+        <button type="button" data-expression="将笑未笑">将笑未笑</button>
+        <button type="button" data-expression="皱眉">皱眉</button>
+        <button type="button" data-expression="单挑眉">单挑眉</button>
+        <button type="button" class="reset">复位表情</button>
       </section>
     </main>
     <output id="status" aria-live="polite"></output>

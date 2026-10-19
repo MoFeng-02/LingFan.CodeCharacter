@@ -13,7 +13,7 @@ import { smileNode } from "./params/smile";
 import { swingNode } from "./params/swing";
 import { turnNode } from "./params/turn";
 import { NODE_ID } from "./nodes";
-import { DEFAULTS, RANGES, SLOT } from "./shared";
+import { BASIS_SLOT_KEYS, DEFAULTS, RANGES, SLOT } from "./shared";
 
 /**
  * 半写实头像域包：六参数 / 一条耦合链 / 五层外观 / 两条约束。
@@ -71,6 +71,12 @@ export const humanoidPack: CharacterPack = {
     { name: SLOT.openWave, direction: "output", range: RANGES.openWave },
     { name: SLOT.cheekLift, direction: "output", range: RANGES.cheekLift },
     { name: SLOT.eyeSqueeze, direction: "output", range: RANGES.eyeSqueeze },
+    ...BASIS_SLOT_KEYS.map((key) => ({
+      name: SLOT[key],
+      direction: "input" as const,
+      defaultValue: DEFAULTS[key],
+      range: RANGES[key],
+    })),
   ],
   nodes: [
     turnNode,
@@ -94,4 +100,4 @@ export const humanoidPack: CharacterPack = {
 };
 
 /** 槽位与节点标识的统一出口：组合根、测试与渲染器按名引用时从这里取。 */
-export { SLOT, DEFAULTS, RANGES, NODE_ID };
+export { SLOT, DEFAULTS, RANGES, NODE_ID, BASIS_SLOT_KEYS };

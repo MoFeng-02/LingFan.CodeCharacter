@@ -28,6 +28,8 @@ import { describe, expect, it } from "vitest";
 const BLUSH_LEFT = 7;
 const EYELID_LEFT = 5;
 const IRIS_LEFT = 3;
+const BROW_LEFT = 6;
+const BROW_RIGHT = 12;
 
 const facePrimitives = (state: CharacterState): readonly RenderPrimitive[] =>
   state.nodes[NODE_ID.face].primitives;
@@ -259,5 +261,94 @@ describe("humanoid 域包", () => {
     );
     expect(open).not.toBe(closed);
     expect(c).not.toBeUndefined();
+  });
+
+  it("基正交性：单挑左眉只改变左眉基元，其余逐字节不变", async () => {
+    const runtime = createCharacterRuntime(humanoidPack);
+    const rest = facePrimitives(await runtime.computeAt(0));
+    const raised = facePrimitives(
+      await runtime.computeAt(0, { [SLOT.browRaiseL]: 1 }),
+    );
+    expect(raised.length).toBe(rest.length);
+    const restY = rest[BROW_LEFT]!.shape;
+    const raisedY = raised[BROW_LEFT]!.shape;
+    expect(restY.kind === "ellipse" && raisedY.kind === "ellipse").toBe(true);
+    if (restY.kind === "ellipse" && raisedY.kind === "ellipse") {
+      expect(raisedY.center.y).toBeLessThan(restY.center.y);
+    }
+    rest.forEach((prim, index) => {
+      if (index === BROW_LEFT) return;
+      expect(JSON.stringify(raised[index])).toBe(JSON.stringify(prim));
+    });
+  });
+
+  it("左右成对：单挑右眉只有右眉动，左右互不牵连", async () => {
+    const runtime = createCharacterRuntime(humanoidPack);
+    const rest = facePrimitives(await runtime.computeAt(0));
+    const raised = facePrimitives(
+      await runtime.computeAt(0, { [SLOT.browRaiseR]: 1 }),
+    );
+    expect(JSON.stringify(raised[BROW_LEFT])).toBe(
+      JSON.stringify(rest[BROW_LEFT]),
+    );
+    const restY = rest[BROW_RIGHT]!.shape;
+    const raisedY = raised[BROW_RIGHT]!.shape;
+    if (restY.kind === "ellipse" && raisedY.kind === "ellipse") {
+      expect(raisedY.center.y).toBeLessThan(restY.center.y);
+    }
+  });
+
+  it("组合叠加：眉部形变随基系数线性插值", async () => {
+    const runtime = createCharacterRuntime(humanoidPack);
+    const browY = async (raise: number): Promise<number> => {
+      const prim = facePrimitives(
+        await runtime.computeAt(0, { [SLOT.browRaiseL]: raise }),
+      )[BROW_LEFT]!;
+      return prim.shape.kind === "ellipse" ? prim.shape.center.y : Number.NaN;
+    };
+    const rest = await browY(0);
+    const half = await browY(0.5);
+    const full = await browY(1);
+    expect(half).toBeCloseTo((rest + full) / 2, 12);
+    expect(full).toBeLessThan(rest);
+  });
+
+  it("下颌基：表情张嘴独立于说话驱动并叠加口腔高度", async () => {
+    const runtime = createCharacterRuntime(humanoidPack);
+    const oralRy = async (
+      overrides: Record<string, number>,
+    ): Promise<number> => {
+      const prim = (await runtime.computeAt(1000, overrides)).nodes[
+        NODE_ID.mouth
+      ].primitives[0];
+      return prim.shape.kind === "ellipse" ? prim.shape.radiusY : Number.NaN;
+    };
+    const silent = await oralRy({ [SLOT.mouthDrive]: 0 });
+    const jaw = await oralRy({ [SLOT.mouthDrive]: 0, [SLOT.jawOpen]: 1 });
+    expect(jaw).toBeGreaterThan(silent);
+    expect(silent).toBeLessThan(0.005);
+  });
+
+  it("视线基：gaze 平移虹膜且与转头扫动相互独立", async () => {
+    const runtime = createCharacterRuntime(humanoidPack);
+    const irisE = async (overrides: Record<string, number>): Promise<number> =>
+      facePrimitives(await runtime.computeAt(0, overrides))[IRIS_LEFT]!
+        .transform.e;
+    const irisF = async (overrides: Record<string, number>): Promise<number> =>
+      facePrimitives(await runtime.computeAt(0, overrides))[IRIS_LEFT]!
+        .transform.f;
+    const rest = await irisE({});
+    // 视线位移经头部呼吸缩放矩阵传导，量级略有缩放，判方向与显著量级。
+    expect((await irisE({ [SLOT.gazeX]: 1 })) - rest).toBeGreaterThan(0.01);
+    expect(await irisF({ [SLOT.gazeY]: 1 })).toBeGreaterThan(await irisF({}));
+  });
+
+  it("基越界被钳制并出具报告", async () => {
+    const runtime = createCharacterRuntime(humanoidPack);
+    const state = await runtime.computeAt(0, { [SLOT.browRaiseL]: 5 });
+    const reports = state.nodes[NODE_ID.face].constraints;
+    expect(reports.length).toBeGreaterThan(0);
+    expect(reports.every((report) => report.clamped)).toBe(true);
+    expect(reports.every((report) => report.applied <= 1)).toBe(true);
   });
 });
