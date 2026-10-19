@@ -39,4 +39,57 @@ export default [
       "@typescript-eslint/await-thenable": "error",
     },
   },
+  /**
+   * 层边界（机械判据）：依赖方向单向，与分层文档一致。
+   * contracts 零实现依赖；kernel 只依赖 contracts；packs 与 renderers
+   * 互不知晓、不依赖 kernel；测试与示例作为消费方不受限。
+   */
+  {
+    files: ["packages/contracts/src/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@lingfan-character/*", "!@lingfan-character/contracts"],
+              message: "契约层零实现依赖，禁止 import 仓内其他包。",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["packages/kernel/src/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@lingfan-character/pack-*", "@lingfan-character/renderer-*"],
+              message: "内核只依赖 contracts，不得 import 任何域包或渲染器。",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["packs/*/src/**/*.ts", "renderers/*/src/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@lingfan-character/kernel", "@lingfan-character/pack-*", "@lingfan-character/renderer-*"],
+              message: "域包与渲染器只依赖 contracts，互不知晓。",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ];
