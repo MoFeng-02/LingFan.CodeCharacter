@@ -14,6 +14,9 @@ importers:
       '@lingfan-character/kernel':
         specifier: workspace:*
         version: link:packages/kernel
+      '@lingfan-character/pack-humanoid':
+        specifier: workspace:*
+        version: link:packs/humanoid
       '@lingfan-character/primitives':
         specifier: workspace:*
         version: link:packages/primitives
@@ -57,6 +60,15 @@ importers:
       '@lingfan-character/contracts':
         specifier: workspace:*
         version: link:../contracts
+
+  packs/humanoid:
+    dependencies:
+      '@lingfan-character/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@lingfan-character/primitives':
+        specifier: workspace:*
+        version: link:../../packages/primitives
 
 packages:
 

@@ -5,7 +5,8 @@
     "paths": {
       "@lingfan-character/contracts": ["packages/contracts/src/index.ts"],
       "@lingfan-character/kernel": ["packages/kernel/src/index.ts"],
-      "@lingfan-character/primitives": ["packages/primitives/src/index.ts"]
+      "@lingfan-character/primitives": ["packages/primitives/src/index.ts"],
+      "@lingfan-character/pack-humanoid": ["packs/humanoid/src/index.ts"]
     }
   },
   "include": ["tests/**/*.ts", "examples/**/*.ts"]
