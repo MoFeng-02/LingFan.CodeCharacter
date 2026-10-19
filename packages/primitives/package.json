@@ -1,0 +1,17 @@
+{
+  "name": "@lingfan-character/primitives",
+  "version": "0.1.0",
+  "description": "契约规定运算原语的参考实现：确定性曲线求值、种子派生与平滑值噪声。",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lingfan-character/contracts": "workspace:*"
+  }
+}

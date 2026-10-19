@@ -1,0 +1,18 @@
+{
+  "name": "@lingfan-character/kernel",
+  "version": "0.1.0",
+  "description": "角色内核：编译依赖图、按拓扑序求值 state(t)、约束钳制与状态验证。",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lingfan-character/contracts": "workspace:*",
+    "@lingfan-character/primitives": "workspace:*"
+  }
+}

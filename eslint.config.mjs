@@ -41,8 +41,9 @@ export default [
   },
   /**
    * 层边界（机械判据）：依赖方向单向，与分层文档一致。
-   * contracts 零实现依赖；kernel 只依赖 contracts；packs 与 renderers
-   * 互不知晓、不依赖 kernel；测试与示例作为消费方不受限。
+   * contracts 零实现依赖；kernel 依赖 contracts 与契约算法参考实现 primitives，
+   * 不得 import 任何域包或渲染器；域包额外允许 primitives（求值器消费），
+   * 渲染器只依赖 contracts；测试与示例作为消费方不受限。
    */
   {
     files: ["packages/contracts/src/**/*.ts"],
@@ -69,7 +70,7 @@ export default [
           patterns: [
             {
               group: ["@lingfan-character/pack-*", "@lingfan-character/renderer-*"],
-              message: "内核只依赖 contracts，不得 import 任何域包或渲染器。",
+              message: "内核只依赖 contracts 与 primitives，不得 import 任何域包或渲染器。",
             },
           ],
         },
@@ -77,7 +78,7 @@ export default [
     },
   },
   {
-    files: ["packs/*/src/**/*.ts", "renderers/*/src/**/*.ts"],
+    files: ["packs/*/src/**/*.ts"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -85,7 +86,28 @@ export default [
           patterns: [
             {
               group: ["@lingfan-character/kernel", "@lingfan-character/pack-*", "@lingfan-character/renderer-*"],
-              message: "域包与渲染器只依赖 contracts，互不知晓。",
+              message: "域包只依赖 contracts 与 primitives，互不知晓、不得依赖内核。",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["renderers/*/src/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "@lingfan-character/kernel",
+                "@lingfan-character/pack-*",
+                "@lingfan-character/renderer-*",
+                "@lingfan-character/primitives",
+              ],
+              message: "渲染器只依赖 contracts，互不知晓。",
             },
           ],
         },

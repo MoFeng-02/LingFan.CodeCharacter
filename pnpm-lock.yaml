@@ -11,6 +11,12 @@ importers:
       '@lingfan-character/contracts':
         specifier: workspace:*
         version: link:packages/contracts
+      '@lingfan-character/kernel':
+        specifier: workspace:*
+        version: link:packages/kernel
+      '@lingfan-character/primitives':
+        specifier: workspace:*
+        version: link:packages/primitives
     devDependencies:
       eslint:
         specifier: 9.39.4
@@ -36,6 +42,21 @@ importers:
       typescript:
         specifier: 5.6.2
         version: 5.6.2
+
+  packages/kernel:
+    dependencies:
+      '@lingfan-character/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@lingfan-character/primitives':
+        specifier: workspace:*
+        version: link:../primitives
+
+  packages/primitives:
+    dependencies:
+      '@lingfan-character/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
 packages:
 

@@ -8,13 +8,22 @@
  *          需要历史的动力学效果以显式子步进与显式状态声明表达（见采样条款契约）。
  */
 
-import type { NodeId, SlotName, TimeMs } from "./state";
+import type {
+  AffineTransform,
+  NodeId,
+  RenderPrimitive,
+  SlotName,
+  TimeMs,
+} from "./state";
 
 /**
  * 确定性随机子流：每个节点独立一份，同种子同序列。
- * 实现由内核提供；种子派生规则见噪声原语契约。
+ * seed 由内核按「角色标识 + 节点标识」派生；噪声类原语以 seed 为格点哈希来源，
+ * next() 供需要序列随机的效果使用。实现由内核提供。
  */
 export interface RandomSubstream {
+  /** 本节点子流的整数种子。 */
+  readonly seed: number;
   /** 返回 0..1 区间内的下一个确定性随机值。 */
   next(): number;
 }
@@ -24,9 +33,13 @@ export interface NodeStepInputs {
   readonly values: Readonly<Record<SlotName, number>>;
 }
 
-/** 节点求值输出：写入的槽位值。 */
+/** 节点求值输出：写入的槽位值、可选形变与可选可渲染基元。 */
 export interface NodeStepOutputs {
   readonly values: Readonly<Record<SlotName, number>>;
+  /** 节点产出的形变；缺省为单位矩阵。 */
+  readonly transform?: AffineTransform;
+  /** 外观节点产出的可渲染基元；缺省为空。 */
+  readonly primitives?: readonly RenderPrimitive[];
 }
 
 /**
