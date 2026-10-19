@@ -10,8 +10,9 @@ import { PALETTE } from "./palette";
 
 /**
  * 脸部节点：脸基形、五官与腮红，全部程序生成。
- * 眨眼压扁眼裂并淡出瞳孔；微笑放大嘴角上挑并浮现腮红；
- * 颧升（耦合链产出）把腮红向上提；眼挤让双眼向鼻侧收拢。
+ * 眼睛由眼白、虹膜、瞳孔与上眼睑构成，眨眼是眼睑下移的物理遮挡；
+ * 微笑放大嘴角上挑并浮现腮红；颧升（耦合链产出）把腮红向上提；
+ * 眼挤让双眼向鼻侧收拢。
  */
 export const faceNode: NodeDeclaration = {
   id: NODE_ID.face,
@@ -46,28 +47,44 @@ export const faceNode: NodeDeclaration = {
       ),
     ];
 
-    // 双眼：眼白随眨眼压扁，瞳孔随之淡出；眼挤产生向鼻侧的收拢。
+    // 双眼：眼白、虹膜、瞳孔三层，上眼睑停在眼裂上缘，眨眼时下移遮蔽；
+    // 眼挤产生向鼻侧的收拢。基元顺序即层叠顺序，眼睑必须晚于瞳孔。
     for (const side of [-1, 1] as const) {
       const eyeX = 0.5 + side * 0.065;
       const eyeShift = multiply(head, translate(-side * squeeze * 0.005, 0));
-      const open = 1 - blink * 0.82;
+      const lidY = 0.411 + blink * 0.041;
       primitives.push(
         ellipse(
           NODE_ID.face,
           pt(eyeX, 0.452),
-          0.034,
-          0.02 * open,
+          0.036,
+          0.023,
           eyeShift,
           PALETTE.eyeWhite,
         ),
         ellipse(
           NODE_ID.face,
           pt(eyeX, 0.452),
-          0.0125,
-          0.0125 * open,
+          0.01,
+          0.014,
           eyeShift,
           PALETTE.iris,
-          1 - blink * 0.9,
+        ),
+        ellipse(
+          NODE_ID.face,
+          pt(eyeX, 0.452),
+          0.005,
+          0.005,
+          eyeShift,
+          PALETTE.pupil,
+        ),
+        ellipse(
+          NODE_ID.face,
+          pt(eyeX, lidY),
+          0.042,
+          0.03,
+          eyeShift,
+          PALETTE.skin,
         ),
       );
       // 眉：细长横椭圆，微笑时轻微下沉。

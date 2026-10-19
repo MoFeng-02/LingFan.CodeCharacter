@@ -8,10 +8,9 @@ export const PALETTE = {
   hairLight: color(0.42, 0.318, 0.251),
   eyeWhite: color(0.98, 0.969, 0.949),
   iris: color(0.231, 0.165, 0.122),
+  pupil: color(0.098, 0.071, 0.055),
   mouth: color(0.725, 0.416, 0.369),
   brow: color(0.247, 0.18, 0.133),
-  glassFrame: color(0.18, 0.149, 0.125),
-  lens: color(0.812, 0.89, 0.91, 0.35),
   pin: color(0.851, 0.643, 0.255),
 } as const;
 

@@ -14,9 +14,10 @@ import { describe, expect, it } from "vitest";
 
 /**
  * 脸部基元数组序（与 appearance/face.ts 实现一致）：
- * 0 脸基形、1 鼻影、（2 眼白、3 瞳、4 眉、5 腮红）×左右、10 嘴。
+ * 0 脸基形、1 鼻影、（2 眼白、3 虹膜、4 瞳孔、5 眼睑、6 眉、7 腮红）×左右、14 嘴。
  */
-const BLUSH_LEFT = 5;
+const BLUSH_LEFT = 7;
+const EYELID_LEFT = 5;
 
 const facePrimitives = (state: CharacterState): readonly RenderPrimitive[] =>
   state.nodes[NODE_ID.face].primitives;
@@ -55,16 +56,26 @@ describe("humanoid 域包", () => {
     );
   });
 
-  it("眨眼节律：静息全开、周期 60% 处闭峰", async () => {
+  it("眨眼节律：眼睑静息收在上缘，周期 60% 处下移越过眼心", async () => {
     const runtime = createCharacterRuntime(humanoidPack);
-    const eyeRadiusY = async (t: number): Promise<number> => {
-      const prim = facePrimitives(await runtime.computeAt(t))[2];
-      return prim.shape.kind === "ellipse" ? prim.shape.radiusY : Number.NaN;
+    const lidCenterY = async (t: number): Promise<number> => {
+      const prim = facePrimitives(await runtime.computeAt(t))[EYELID_LEFT];
+      return prim.shape.kind === "ellipse" ? prim.shape.center.y : Number.NaN;
     };
-    const openY = await eyeRadiusY(0);
-    const closedY = await eyeRadiusY(2220);
-    expect(openY).toBeCloseTo(0.02, 6);
-    expect(closedY).toBeLessThan(openY / 5);
+    const openY = await lidCenterY(0);
+    const closedY = await lidCenterY(2220);
+    expect(openY).toBeCloseTo(0.411, 6);
+    expect(closedY).toBeGreaterThan(0.45);
+  });
+
+  it("转头：绕颈点旋转而非平移", async () => {
+    const runtime = createCharacterRuntime(humanoidPack);
+    const shear = async (turn: number): Promise<number> =>
+      facePrimitives(await runtime.computeAt(0, { [SLOT.turn]: turn }))[0]
+        .transform.b;
+    expect(await shear(0)).toBe(0);
+    expect(await shear(-1)).toBeLessThan(0);
+    expect(await shear(1)).toBeGreaterThan(0);
   });
 
   it("微笑耦合链：腮红浮现且颧升上提", async () => {
@@ -82,13 +93,17 @@ describe("humanoid 域包", () => {
     );
   });
 
-  it("呼吸：胸腔缩放随呼吸波形起伏且归零后复原", async () => {
+  it("呼吸：均匀缩放随呼吸波形起伏且归零后复原", async () => {
     const runtime = createCharacterRuntime(humanoidPack);
     const scaleY = async (breath: number): Promise<number> =>
       facePrimitives(await runtime.computeAt(0, { [SLOT.breath]: breath }))[0]
         .transform.d;
-    expect(await scaleY(0)).toBeCloseTo(0.994, 12);
+    expect(await scaleY(0)).toBeCloseTo(0.992, 12);
     expect(await scaleY(1)).toBeGreaterThan(1);
+    const scaleX = async (breath: number): Promise<number> =>
+      facePrimitives(await runtime.computeAt(0, { [SLOT.breath]: breath }))[0]
+        .transform.a;
+    expect(await scaleX(0)).toBe(await scaleY(0));
   });
 
   it("发摆：正负摆动产生可辨的发帘平移差", async () => {
