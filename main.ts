@@ -18,6 +18,12 @@ import {
 } from "@lingfan-character/example-humanoid";
 import { createSpeechEnvelope } from "@lingfan-character/example-humanoid/demo";
 import { buildDrawPlan, draw } from "@lingfan-character/renderer-canvas2d";
+import {
+  isTransitionDone,
+  redirect,
+  transitionValue,
+  type Transition,
+} from "./transition";
 
 /** 画布固定正方形：归一化坐标乘短边即可铺满，无需处理非正方形留白。 */
 const STAGE = 512;
@@ -34,7 +40,41 @@ const runtime = createCharacterRuntime(humanoidPack);
 /** 输入覆盖：滑杆只写这里，每帧求值时读走，不做任何缓存。 */
 const overrides: Partial<Record<SlotName, number>> = {};
 
-/** 五个输入槽挂滑杆：值实时写入 overrides，渲染循环天然感知。 */
+/**
+ * 切换锚点表（06 #23）：预设与复位不直接改写覆盖值，而是生成
+ * 重定向锚点，每帧把插值写进覆盖——切换永远值连续、不突兀。
+ * 组合根持有锚点表；角色域只看到随时间连续变化的输入覆盖。
+ */
+const transitions = new Map<SlotName, Transition>();
+
+/** 角色时间轴上的当前时刻（与 frame 的 tMs 同源）。 */
+function nowTMs(): number {
+  return performance.now() - (epoch ?? performance.now());
+}
+
+/**
+ * 生成一次切换：目标值来自新预设（或复位回内置缺省），起点 =
+ * 旧过渡当前值或现覆盖值。手动滑杆不受影响——用户意图随时压制。
+ */
+function beginTransition(slot: SlotName, to: number): void {
+  const previous = transitions.get(slot);
+  const fallback = overrides[slot] ?? DEFAULTS[slot] ?? 0;
+  transitions.set(slot, redirect(previous, fallback, to, nowTMs(), "smoothstep"));
+}
+
+/** 每帧推进：过渡窗内写插值，走完固化目标值并清锚点。 */
+function tickTransitions(tMs: number): void {
+  for (const [slot, tr] of transitions) {
+    if (isTransitionDone(tr, tMs)) {
+      overrides[slot] = tr.to;
+      transitions.delete(slot);
+    } else {
+      overrides[slot] = transitionValue(tr, tMs);
+    }
+  }
+}
+
+/** 五个输入槽挂滑杆：手动拖动即时生效并压制该槽的过渡锚点。 */
 function wireControls(): void {
   const inputs = document.querySelectorAll<HTMLInputElement>("#panel input");
   for (const input of inputs) {
@@ -42,6 +82,7 @@ function wireControls(): void {
     if (!slot) continue;
     const apply = () => {
       const value = Number.parseFloat(input.value);
+      transitions.delete(slot);
       overrides[slot] = Number.isFinite(value) ? value : 0;
     };
     input.addEventListener("input", apply);
@@ -87,16 +128,18 @@ const expressionButtons = document.querySelectorAll<HTMLButtonElement>(
   "#expressions button[data-expression]",
 );
 
-/** 应用预设：先撤旧预设涉及的槽再写新值；null 表示全部清除。 */
+/** 应用预设：新旧预设涉及的槽全部走锚点过渡；null 表示全部回缺省。 */
 function applyExpression(name: string | null): void {
-  if (activeExpression !== null) {
-    for (const slot of Object.keys(EXPRESSIONS[activeExpression] ?? {})) {
-      delete overrides[slot as SlotName];
-    }
-  }
+  const involved = new Set<SlotName>(
+    Object.keys(EXPRESSIONS[activeExpression ?? ""] ?? {}) as SlotName[],
+  );
   activeExpression = name;
-  if (name !== null) {
-    Object.assign(overrides, EXPRESSIONS[name]);
+  const next = EXPRESSIONS[name ?? ""] ?? {};
+  for (const slot of Object.keys(next) as SlotName[]) {
+    involved.add(slot);
+  }
+  for (const slot of involved) {
+    beginTransition(slot, next[slot] ?? DEFAULTS[slot] ?? 0);
   }
   for (const button of expressionButtons) {
     button.classList.toggle("active", button.dataset.expression === name);
@@ -117,7 +160,7 @@ function wireExpressions(): void {
     ?.addEventListener("click", () => {
       applyExpression(null);
       for (const key of BASIS_SLOT_KEYS) {
-        delete overrides[SLOT[key]];
+        beginTransition(SLOT[key], DEFAULTS[SLOT[key]] ?? 0);
       }
     });
 }
@@ -144,6 +187,7 @@ async function frame(now: number): Promise<void> {
     epoch = now;
   }
   const tMs = now - epoch;
+  tickTransitions(tMs);
   if (speaking) {
     overrides[SLOT.mouthDrive] = speech.at(tMs);
   }

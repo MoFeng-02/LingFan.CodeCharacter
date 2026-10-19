@@ -11,5 +11,5 @@
       "@lingfan-character/renderer-canvas2d": ["renderers/canvas2d/src/index.ts"]
     }
   },
-  "include": ["main.ts", "tests/**/*.ts", "examples/**/*.ts"]
+  "include": ["main.ts", "transition.ts", "tests/**/*.ts", "examples/**/*.ts"]
 }
