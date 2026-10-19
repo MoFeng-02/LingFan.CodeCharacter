@@ -10,9 +10,11 @@ import { PALETTE } from "./palette";
 
 /**
  * 脸部节点：脸基形、五官与腮红，全部程序生成。
- * 眼睛由眼白、虹膜、瞳孔与上眼睑构成，眨眼是眼睑下移的物理遮挡；
- * 微笑放大嘴角上挑并浮现腮红；颧升（耦合链产出）把腮红向上提；
- * 眼挤让双眼向鼻侧收拢。
+ * 转头是朝向视差：特征向转向侧扫动且按深度分档（鼻 > 五官 > 脸缘），
+ * 同组特征转向侧位移略大，脸基形可见宽度随朝向收窄；不做整头旋转。
+ * 眼睛由眼白、虹膜、瞳孔与上眼睑构成，眨眼是眼睑下移的物理遮挡，
+ * 虹膜与瞳孔随朝向额外偏移表达视线跟随；微笑放大嘴角上挑并浮现腮红，
+ * 颧升（耦合链产出）把腮红向上提，眼挤让双眼向鼻侧收拢。
  */
 export const faceNode: NodeDeclaration = {
   id: NODE_ID.face,
@@ -34,11 +36,19 @@ export const faceNode: NodeDeclaration = {
     const squeeze = inputs.values[SLOT.eyeSqueeze] ?? 0;
     const head = headTransform(turn, breath);
 
+    // 脸基形：随朝向轻微偏移并收窄可见宽度（2.5D 侧转的体感来源）。
     const primitives: RenderPrimitive[] = [
-      ellipse(NODE_ID.face, pt(0.5, 0.47), 0.19, 0.235, head, PALETTE.skin),
       ellipse(
         NODE_ID.face,
-        pt(0.5, 0.525),
+        pt(0.5 + turn * 0.014, 0.47),
+        0.19 * (1 - Math.abs(turn) * 0.1),
+        0.235,
+        head,
+        PALETTE.skin,
+      ),
+      ellipse(
+        NODE_ID.face,
+        pt(0.5 + turn * 0.03, 0.525),
         0.009,
         0.014,
         head,
@@ -48,10 +58,16 @@ export const faceNode: NodeDeclaration = {
     ];
 
     // 双眼：眼白、虹膜、瞳孔三层，上眼睑停在眼裂上缘，眨眼时下移遮蔽；
-    // 眼挤产生向鼻侧的收拢。基元顺序即层叠顺序，眼睑必须晚于瞳孔。
+    // 眼挤产生向鼻侧的收拢，转头按左右深度产生分档扫动，虹膜瞳孔
+    // 再叠加视线跟随。基元顺序即层叠顺序，眼睑必须晚于瞳孔。
     for (const side of [-1, 1] as const) {
       const eyeX = 0.5 + side * 0.065;
-      const eyeShift = multiply(head, translate(-side * squeeze * 0.005, 0));
+      const turnShift = turn * (0.024 + side * 0.007);
+      const eyeShift = multiply(
+        head,
+        translate(-side * squeeze * 0.005 + turnShift, 0),
+      );
+      const gazeShift = multiply(eyeShift, translate(turn * 0.008, 0));
       const lidY = 0.411 + blink * 0.041;
       primitives.push(
         ellipse(
@@ -67,7 +83,7 @@ export const faceNode: NodeDeclaration = {
           pt(eyeX, 0.452),
           0.01,
           0.014,
-          eyeShift,
+          gazeShift,
           PALETTE.iris,
         ),
         ellipse(
@@ -75,7 +91,7 @@ export const faceNode: NodeDeclaration = {
           pt(eyeX, 0.452),
           0.005,
           0.005,
-          eyeShift,
+          gazeShift,
           PALETTE.pupil,
         ),
         ellipse(
@@ -87,25 +103,28 @@ export const faceNode: NodeDeclaration = {
           PALETTE.skin,
         ),
       );
-      // 眉：细长横椭圆，微笑时轻微下沉。
+      // 眉：细长横椭圆，随朝向扫动，微笑时轻微下沉。
       primitives.push(
         ellipse(
           NODE_ID.face,
           pt(eyeX, 0.404),
           0.03,
           0.005,
-          multiply(head, translate(0, smile * 0.004)),
+          multiply(head, translate(turnShift, smile * 0.004)),
           PALETTE.brow,
         ),
       );
-      // 腮红：微笑浮现，颧升上提。
+      // 腮红：微笑浮现，随朝向扫动，颧升上提。
       primitives.push(
         ellipse(
           NODE_ID.face,
           pt(0.5 + side * 0.095, 0.515),
           0.028,
           0.016,
-          multiply(head, translate(0, -cheek * 0.015)),
+          multiply(
+            head,
+            translate(turn * 0.026 + side * turn * 0.007, -cheek * 0.015),
+          ),
           PALETTE.skinShade,
           clamp(smile * 0.4, 0, 1),
         ),
@@ -136,7 +155,7 @@ export const faceNode: NodeDeclaration = {
           },
           { kind: "closePath" },
         ],
-        head,
+        multiply(head, translate(turn * 0.024, 0)),
         PALETTE.mouth,
       ),
     );

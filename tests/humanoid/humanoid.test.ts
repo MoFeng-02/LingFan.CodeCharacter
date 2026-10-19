@@ -22,6 +22,7 @@ import { describe, expect, it } from "vitest";
  */
 const BLUSH_LEFT = 7;
 const EYELID_LEFT = 5;
+const IRIS_LEFT = 3;
 
 const facePrimitives = (state: CharacterState): readonly RenderPrimitive[] =>
   state.nodes[NODE_ID.face].primitives;
@@ -72,14 +73,32 @@ describe("humanoid 域包", () => {
     expect(closedY).toBeGreaterThan(0.45);
   });
 
-  it("转头：绕颈点旋转而非平移", async () => {
+  it("转头：特征向转向侧扫动、虹膜视线跟随、脸变窄且整头不旋转", async () => {
     const runtime = createCharacterRuntime(humanoidPack);
-    const shear = async (turn: number): Promise<number> =>
-      facePrimitives(await runtime.computeAt(0, { [SLOT.turn]: turn }))[0]
-        .transform.b;
-    expect(await shear(0)).toBe(0);
-    expect(await shear(-1)).toBeLessThan(0);
-    expect(await shear(1)).toBeGreaterThan(0);
+    const at = (turn: number) =>
+      runtime.computeAt(0, { [SLOT.turn]: turn }).then(facePrimitives);
+    const rest = await at(0);
+    const right = await at(1);
+    const left = await at(-1);
+    // 虹膜随朝向扫动并带视线跟随，方向与转向一致。
+    expect(right[IRIS_LEFT]!.transform.e).toBeGreaterThan(
+      rest[IRIS_LEFT]!.transform.e,
+    );
+    expect(left[IRIS_LEFT]!.transform.e).toBeLessThan(
+      rest[IRIS_LEFT]!.transform.e,
+    );
+    // 脸基形朝向侧转时可见宽度收窄。
+    const restFace = rest[0]!.shape;
+    const turnedFace = right[0]!.shape;
+    expect(restFace.kind === "ellipse" && turnedFace.kind === "ellipse").toBe(
+      true,
+    );
+    if (restFace.kind === "ellipse" && turnedFace.kind === "ellipse") {
+      expect(turnedFace.radiusX).toBeLessThan(restFace.radiusX);
+    }
+    // 刚体基准无旋转分量：整头旋转读作摇头，是回归红线。
+    expect(right[0]!.transform.b).toBe(0);
+    expect(left[0]!.transform.b).toBe(0);
   });
 
   it("微笑耦合链：腮红浮现且颧升上提", async () => {

@@ -1,13 +1,14 @@
 import type { NodeDeclaration } from "@lingfan-character/contracts";
 import { NODE_ID } from "../nodes";
 import { SLOT } from "../shared";
-import { ellipse, multiply, pt, rotateAround } from "./geometry";
+import { ellipse, multiply, pt, rotateAround, translate } from "./geometry";
 import { headTransform } from "./headMotion";
 import { PALETTE } from "./palette";
 
 /**
  * 后发层节点：头后的大块发型与两侧垂发，是绘制序的最底层外观。
- * 随头部刚体运动，并带极小的发摆延迟感（绕发根的小角度旋转）。
+ * 随头部刚体运动，并带发摆延迟感（绕发根的小角度旋转）与
+ * 转头反向滞后（头转向侧时后发留在原位一点，增强层次）。
  */
 export const hairBackNode: NodeDeclaration = {
   id: NODE_ID.hairBack,
@@ -18,8 +19,11 @@ export const hairBackNode: NodeDeclaration = {
     const breath = inputs.values[SLOT.breathWave] ?? 0;
     const swing = inputs.values[SLOT.swingWave] ?? 0;
     const base = multiply(
-      headTransform(turn, breath),
-      rotateAround(0.5, 0.35, swing * 0.008),
+      multiply(
+        headTransform(turn, breath),
+        rotateAround(0.5, 0.35, swing * 0.008),
+      ),
+      translate(-turn * 0.006, 0),
     );
     return {
       values: {},
