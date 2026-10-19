@@ -7,9 +7,9 @@ import {
 } from "../../transition";
 
 /**
- * 06 #23「过渡与混合」的机制判据：切换 = 显式锚点重定向。
+ * 「过渡与混合」的机制判据：切换 = 显式锚点重定向。
  * 突兀的本质是参数函数在切换点不连续——本组判据把「值连续、
- * 无状态、可重放」三条性质机械化验收。
+ * 无状态、可重放、采样密度无关」四条性质机械化验收。
  */
 
 const linear = (
@@ -61,6 +61,27 @@ describe("锚点重定向过渡", () => {
     const tr = redirect(linear(0, 1, 0, 300), 0, 0.5, 120, "smoothstep");
     for (const t of [0, 120, 250, 400, 900]) {
       expect(transitionValue(tr, t)).toBe(transitionValue(tr, t));
+    }
+  });
+
+  it("采样密度不改轨迹：粗采样点的值与细采样序列逐字节一致", () => {
+    const tr = redirect(linear(0, 1, 0, 300), 0, 0.5, 120, "smoothstep");
+    // FPS 只决定观测多密、不决定动作是什么：粗步长的每个采样时刻
+    // 都是细步长序列的成员，对应值必须完全相等（非近似）。
+    const fine: number[] = [];
+    for (let t = 0; t <= 1200; t += 16) fine.push(transitionValue(tr, t));
+    for (let t = 0, i = 0; t <= 1200; t += 64, i += 4) {
+      expect(transitionValue(tr, t)).toBe(fine[i]);
+    }
+  });
+
+  it("锚点表可序列化交接：结构化往返后重采样轨迹逐字节一致", () => {
+    const tr = redirect(linear(0, 1, 0, 300), 0, 0.5, 120, "smoothstep");
+    // 调度方与求值方之间交接的只有这几行纯数据；序列化往返不得
+    // 改变任何采样点的值。
+    const revived = JSON.parse(JSON.stringify(tr)) as Transition;
+    for (let t = 0; t <= 1200; t += 37) {
+      expect(transitionValue(revived, t)).toBe(transitionValue(tr, t));
     }
   });
 

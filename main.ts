@@ -79,7 +79,7 @@ const runtime = createCharacterRuntime(humanoidPack);
 const overrides: Partial<Record<SlotName, number>> = {};
 
 /**
- * 切换锚点表（06 #23）：预设与复位不直接改写覆盖值，而是生成
+ * 切换锚点表：预设与复位不直接改写覆盖值，而是生成
  * 重定向锚点，每帧把插值写进覆盖——切换永远值连续、不突兀。
  * 组合根持有锚点表；角色域只看到随时间连续变化的输入覆盖。
  */
