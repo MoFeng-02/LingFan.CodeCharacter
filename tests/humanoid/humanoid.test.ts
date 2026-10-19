@@ -9,7 +9,11 @@ import {
   createCharacterRuntime,
   validateState,
 } from "@lingfan-character/kernel";
-import { NODE_ID, SLOT, humanoidPack } from "@lingfan-character/pack-humanoid";
+import {
+  NODE_ID,
+  SLOT,
+  humanoidPack,
+} from "@lingfan-character/example-humanoid";
 import { describe, expect, it } from "vitest";
 
 /**

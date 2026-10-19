@@ -78,15 +78,20 @@ export default [
     },
   },
   {
-    files: ["packs/*/src/**/*.ts"],
+    files: ["packs/*/src/**/*.ts", "examples/*/src/**/*.ts"],
     rules: {
       "no-restricted-imports": [
         "error",
         {
           patterns: [
             {
-              group: ["@lingfan-character/kernel", "@lingfan-character/pack-*", "@lingfan-character/renderer-*"],
-              message: "域包只依赖 contracts 与 primitives，互不知晓、不得依赖内核。",
+              group: [
+                "@lingfan-character/kernel",
+                "@lingfan-character/pack-*",
+                "@lingfan-character/example-*",
+                "@lingfan-character/renderer-*",
+              ],
+              message: "域包与示例配方只依赖 contracts 与 primitives，互不知晓、不得依赖内核。",
             },
           ],
         },

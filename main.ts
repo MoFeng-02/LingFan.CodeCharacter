@@ -11,7 +11,7 @@
 
 import type { SlotName } from "@lingfan-character/contracts";
 import { createCharacterRuntime } from "@lingfan-character/kernel";
-import { humanoidPack, SLOT } from "@lingfan-character/pack-humanoid";
+import { humanoidPack, SLOT } from "@lingfan-character/example-humanoid";
 import { buildDrawPlan, draw } from "@lingfan-character/renderer-canvas2d";
 
 /** 画布固定正方形：归一化坐标乘短边即可铺满，无需处理非正方形留白。 */

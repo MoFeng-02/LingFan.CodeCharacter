@@ -13,8 +13,10 @@
 
 ```
 packages/contracts   契约层：全部类型与语义承诺，零实现依赖
-packages/kernel      内核：只依赖 contracts 的求值运行时
-packs/*              域包：一类角色的适配器包（humanoid 首实例）
+packages/primitives 契约算法参考实现：曲线、噪声与随机子流
+packages/kernel      内核：只依赖 contracts 与 primitives 的求值运行时
+examples/*           示例配方：一类角色的适配器范例（humanoid 首实例），
+                     不背 API 稳定性承诺；packs/ 预留给正式域包
 renderers/*          渲染适配器：state(t) 到像素，可整体替换
 tests/               全仓测试（根目录集中，不与源码同置）
 ```

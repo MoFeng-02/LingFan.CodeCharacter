@@ -1,6 +1,8 @@
-# workspace 清单：packages/、packs/、renderers/ 下的目录是包；tests/ 留在根目录、不是包
+# workspace 清单：packages/、examples/、renderers/ 下的目录是包；tests/ 留在根目录、不是包。
+# packs/ 预留给未来的正式域包；examples/ 是演示配方，不背 API 稳定性承诺。
 packages:
   - packages/*
+  - examples/*
   - packs/*
   - renderers/*
 

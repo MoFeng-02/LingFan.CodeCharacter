@@ -1,6 +1,10 @@
 import type { BlendMode, CharacterState } from "@lingfan-character/contracts";
 import { createCharacterRuntime } from "@lingfan-character/kernel";
-import { NODE_ID, SLOT, humanoidPack } from "@lingfan-character/pack-humanoid";
+import {
+  NODE_ID,
+  SLOT,
+  humanoidPack,
+} from "@lingfan-character/example-humanoid";
 import {
   buildDrawPlan,
   draw,

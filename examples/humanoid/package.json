@@ -1,5 +1,5 @@
 {
-  "name": "@lingfan-character/pack-humanoid",
+  "name": "@lingfan-character/example-humanoid",
   "version": "0.1.0",
   "private": true,
   "type": "module",

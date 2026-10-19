@@ -11,12 +11,12 @@ importers:
       '@lingfan-character/contracts':
         specifier: workspace:*
         version: link:packages/contracts
+      '@lingfan-character/example-humanoid':
+        specifier: workspace:*
+        version: link:examples/humanoid
       '@lingfan-character/kernel':
         specifier: workspace:*
         version: link:packages/kernel
-      '@lingfan-character/pack-humanoid':
-        specifier: workspace:*
-        version: link:packs/humanoid
       '@lingfan-character/primitives':
         specifier: workspace:*
         version: link:packages/primitives
@@ -46,6 +46,15 @@ importers:
         specifier: 2.1.1
         version: 2.1.1(supports-color@7.2.0)
 
+  examples/humanoid:
+    dependencies:
+      '@lingfan-character/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@lingfan-character/primitives':
+        specifier: workspace:*
+        version: link:../../packages/primitives
+
   packages/contracts:
     devDependencies:
       typescript:
@@ -66,15 +75,6 @@ importers:
       '@lingfan-character/contracts':
         specifier: workspace:*
         version: link:../contracts
-
-  packs/humanoid:
-    dependencies:
-      '@lingfan-character/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      '@lingfan-character/primitives':
-        specifier: workspace:*
-        version: link:../../packages/primitives
 
   renderers/canvas2d:
     dependencies:
