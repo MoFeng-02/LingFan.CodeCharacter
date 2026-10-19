@@ -12,9 +12,11 @@
     "lint:rules": "eslint .",
     "test:unit": "vitest run",
     "format": "prettier --write \"packages/**/src/**/*.ts\" \"packs/**/src/**/*.ts\" \"renderers/**/src/**/*.ts\" \"tests/**/*.ts\"",
-    "format:check": "prettier --check \"packages/**/src/**/*.ts\" \"packs/**/src/**/*.ts\" \"renderers/**/src/**/*.ts\" \"tests/**/*.ts\""
+    "format:check": "prettier --check \"packages/**/src/**/*.ts\" \"packs/**/src/**/*.ts\" \"renderers/**/src/**/*.ts\" \"tests/**/*.ts\"",
+    "visual": "esbuild main.ts --bundle --format=iife --outfile=out/main.js"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "eslint": "9.39.4",
     "prettier": "3.3.3",
     "tsx": "4.19.0",

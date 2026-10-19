@@ -104,7 +104,7 @@ describe("canvas2d 渲染器", () => {
     expect(plan.coordinateSpace).toBe(state.coordinateSpace);
   });
 
-  it("画布缩放按比例进入矩阵与坐标", async () => {
+  it("画布缩放只进矩阵不进形状坐标（双重缩放回归防线）", async () => {
     const runtime = createCharacterRuntime(humanoidPack);
     const state = await runtime.computeAt(0);
     const small = buildDrawPlan(state, 100);
@@ -113,19 +113,40 @@ describe("canvas2d 渲染器", () => {
       small.commands[0]!.transform[4]! * 2,
     );
     expect(large.commands[0]!.shape.kind).toBe(small.commands[0]!.shape.kind);
-    const smallEllipse = small.commands[0]!.shape;
-    const largeEllipse = large.commands[0]!.shape;
-    if (smallEllipse.kind === "ellipse" && largeEllipse.kind === "ellipse") {
-      expect(largeEllipse.rx).toBe(smallEllipse.rx * 2);
+    const smallShape = small.commands[0]!.shape;
+    const largeShape = large.commands[0]!.shape;
+    if (smallShape.kind === "ellipse" && largeShape.kind === "ellipse") {
+      // 形状坐标保持归一化：不同缩放下必须完全一致，缩放只在矩阵里。
+      expect(largeShape.cx).toBe(smallShape.cx);
+      expect(largeShape.cy).toBe(smallShape.cy);
+      expect(largeShape.rx).toBe(smallShape.rx);
+      expect(largeShape.ry).toBe(smallShape.ry);
     } else {
-      const smallPath = smallEllipse.commands[0];
-      const largePath = largeEllipse.commands[0];
+      const smallPath = smallShape.commands[0];
+      const largePath = largeShape.commands[0];
       expect(largePath?.kind === "moveTo" && smallPath?.kind === "moveTo").toBe(
         true,
       );
       expect(largePath?.kind === "moveTo" ? largePath.x : 0).toBe(
-        smallPath?.kind === "moveTo" ? smallPath.x * 2 : Number.NaN,
+        smallPath?.kind === "moveTo" ? smallPath.x : Number.NaN,
       );
+    }
+  });
+
+  it("变换矩阵作用于形状中心必须落在画布内（空间语义判据）", async () => {
+    const plan = await planAt(0);
+    expect(plan.commands.length).toBeGreaterThan(0);
+    for (const command of plan.commands) {
+      const [a, b, c, d, e, f] = command.transform;
+      // 取形状自身中心作为探针点：椭圆用真实中心，路径用归一化画布中心近似。
+      const px0 = command.shape.kind === "ellipse" ? command.shape.cx : 0.5;
+      const py0 = command.shape.kind === "ellipse" ? command.shape.cy : 0.5;
+      const pixelX = a * px0 + c * py0 + e;
+      const pixelY = b * px0 + d * py0 + f;
+      expect(pixelX).toBeGreaterThan(0);
+      expect(pixelX).toBeLessThan(SCALE);
+      expect(pixelY).toBeGreaterThan(0);
+      expect(pixelY).toBeLessThan(SCALE);
     }
   });
 

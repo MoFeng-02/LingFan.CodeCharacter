@@ -10,8 +10,8 @@ export {
   fingerprint,
   type DrawCommand,
   type DrawPlan,
-  type PixelPathCommand,
-  type PixelShape,
+  type CompiledPathCommand,
+  type CompiledShape,
 } from "./commands.js";
 export { draw, type DrawingContext } from "./draw.js";
 export {

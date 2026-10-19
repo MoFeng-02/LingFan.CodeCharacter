@@ -6,8 +6,10 @@
  * 为什么：确定性判据落在「同 state 编译两遍得到同一串」上——不依赖 canvas 位图、
  *         不依赖 GPU，也无需运行画布即可在 node 环境验收。
  * 怎么用：plan = buildDrawPlan(state, scale)；draw(ctx, plan) 执行；fingerprint(plan) 比对。
- * 注意事项：混合模式对契约外的取值必须报错（契约要求，不静默忽略）；
- *          指令流不含任何节点语义，只有形状、矩阵、颜色与顺序。
+ * 注意事项：形状坐标保持归一化（与 state(t) 同域），画布缩放全部由 transform
+ *          矩阵承担——最终像素点 = 缩放矩阵 · 节点形变 · 基元形变 · 形状点，
+ *          缩放只允许出现一次；混合模式对契约外的取值必须报错（契约要求，
+ *          不静默忽略）；指令流不含任何节点语义，只有形状、矩阵、颜色与顺序。
  */
 
 import type {
@@ -19,8 +21,8 @@ import type {
 } from "@lingfan-character/contracts";
 import { compose, scaleTransform, toTuple } from "./transform.js";
 
-/** 像素路径命令：坐标已乘缩放，扁平数字便于序列化。 */
-export type PixelPathCommand =
+/** 编译后路径命令：坐标保持归一化，空间映射交给 transform。 */
+export type CompiledPathCommand =
   | { readonly kind: "moveTo"; readonly x: number; readonly y: number }
   | { readonly kind: "lineTo"; readonly x: number; readonly y: number }
   | {
@@ -34,9 +36,9 @@ export type PixelPathCommand =
     }
   | { readonly kind: "closePath" };
 
-/** 像素形状：路径或椭圆，坐标均为画布像素。 */
-export type PixelShape =
-  | { readonly kind: "path"; readonly commands: readonly PixelPathCommand[] }
+/** 编译后形状：路径或椭圆，坐标均为归一化域。 */
+export type CompiledShape =
+  | { readonly kind: "path"; readonly commands: readonly CompiledPathCommand[] }
   | {
       readonly kind: "ellipse";
       readonly cx: number;
@@ -52,7 +54,7 @@ export interface DrawCommand {
   readonly fillStyle: string;
   /** 最终合成矩阵（画布缩放 × 节点形变 × 基元形变），setTransform 参数序。 */
   readonly transform: readonly [number, number, number, number, number, number];
-  readonly shape: PixelShape;
+  readonly shape: CompiledShape;
 }
 
 /** 绘制计划：一次绘制的全部指令，顺序即 zOrder 展开序。 */
@@ -74,50 +76,42 @@ function fillStyleOf(color: RgbaColor): string {
   return `rgba(${Math.round(color.r * 255)},${Math.round(color.g * 255)},${Math.round(color.b * 255)},${color.a})`;
 }
 
-/** 像素化路径命令：所有坐标乘缩放。 */
-function toPixelCommand(command: PathCommand, scale: number): PixelPathCommand {
+/** 编译路径命令：坐标保持归一化，空间映射交给指令的 transform。 */
+function toCompiledCommand(command: PathCommand): CompiledPathCommand {
   switch (command.kind) {
     case "moveTo":
-      return {
-        kind: "moveTo",
-        x: command.point.x * scale,
-        y: command.point.y * scale,
-      };
+      return { kind: "moveTo", x: command.point.x, y: command.point.y };
     case "lineTo":
-      return {
-        kind: "lineTo",
-        x: command.point.x * scale,
-        y: command.point.y * scale,
-      };
+      return { kind: "lineTo", x: command.point.x, y: command.point.y };
     case "bezierCurveTo":
       return {
         kind: "bezierCurveTo",
-        c1x: command.control1.x * scale,
-        c1y: command.control1.y * scale,
-        c2x: command.control2.x * scale,
-        c2y: command.control2.y * scale,
-        x: command.point.x * scale,
-        y: command.point.y * scale,
+        c1x: command.control1.x,
+        c1y: command.control1.y,
+        c2x: command.control2.x,
+        c2y: command.control2.y,
+        x: command.point.x,
+        y: command.point.y,
       };
     case "closePath":
       return { kind: "closePath" };
   }
 }
 
-/** 像素化形状：路径与椭圆的坐标乘缩放。 */
-function toPixelShape(shape: ShapePrimitive, scale: number): PixelShape {
+/** 编译形状：路径与椭圆的坐标保持归一化，缩放由 transform 矩阵统一承担。 */
+function toCompiledShape(shape: ShapePrimitive): CompiledShape {
   if (shape.kind === "ellipse") {
     return {
       kind: "ellipse",
-      cx: shape.center.x * scale,
-      cy: shape.center.y * scale,
-      rx: shape.radiusX * scale,
-      ry: shape.radiusY * scale,
+      cx: shape.center.x,
+      cy: shape.center.y,
+      rx: shape.radiusX,
+      ry: shape.radiusY,
     };
   }
   return {
     kind: "path",
-    commands: shape.commands.map((command) => toPixelCommand(command, scale)),
+    commands: shape.commands.map(toCompiledCommand),
   };
 }
 
@@ -144,7 +138,7 @@ export function buildDrawPlan(state: CharacterState, scale: number): DrawPlan {
         transform: toTuple(
           compose(scaleMatrix, compose(node.transform, primitive.transform)),
         ),
-        shape: toPixelShape(primitive.shape, scale),
+        shape: toCompiledShape(primitive.shape),
       });
     }
   }
