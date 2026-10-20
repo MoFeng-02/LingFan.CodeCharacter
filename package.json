@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@lingfan-character/contracts": "workspace:*",
+    "@lingfan-character/example-bust3d": "workspace:*",
     "@lingfan-character/example-humanoid": "workspace:*",
     "@lingfan-character/example-portrait": "workspace:*",
     "@lingfan-character/kernel": "workspace:*",

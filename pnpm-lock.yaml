@@ -11,6 +11,9 @@ importers:
       '@lingfan-character/contracts':
         specifier: workspace:*
         version: link:packages/contracts
+      '@lingfan-character/example-bust3d':
+        specifier: workspace:*
+        version: link:examples/bust3d
       '@lingfan-character/example-humanoid':
         specifier: workspace:*
         version: link:examples/humanoid
@@ -51,6 +54,15 @@ importers:
       vitest:
         specifier: 2.1.1
         version: 2.1.1(supports-color@7.2.0)
+
+  examples/bust3d:
+    dependencies:
+      '@lingfan-character/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@lingfan-character/primitives':
+        specifier: workspace:*
+        version: link:../../packages/primitives
 
   examples/humanoid:
     dependencies:
