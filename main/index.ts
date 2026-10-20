@@ -16,7 +16,11 @@ import {
   runtimeFor,
   wireModes,
 } from "./modes";
-import { tickTransitions, wireControls } from "./overrides";
+import {
+  overrides,
+  tickTransitions,
+  wireControls,
+} from "./overrides";
 import { ctx, drawingTarget, stage, status } from "./stage";
 
 async function frame(now: number): Promise<void> {
@@ -25,7 +29,7 @@ async function frame(now: number): Promise<void> {
   tickTransitions(tMs);
   tickMouthDrive();
   const mode = currentMode();
-  let state = await runtimeFor(mode).computeAt(tMs);
+  let state = await runtimeFor(mode).computeAt(tMs, overrides);
   if (mode === "bust3d") {
     // 立体模式：几何求值后经 2D 采样器编译成既有指令流——执行层与
     // 指纹机器零改动，转头效果来自视角重采样而非平面位移。

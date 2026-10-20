@@ -29,5 +29,23 @@ export const RANGES: Partial<Record<string, { min: number; max: number }>> = {
 };
 
 /** 视角映射幅度：满参数对应的弧度。 */
-export const YAW_RANGE = 0.9;
+export const YAW_RANGE = 1.2;
 export const PITCH_RANGE = 0.5;
+
+/** 皮肤色带（亮→暗）：采样器按光照分档取色，档越细过渡越柔和。 */
+export const SKIN_BANDS = [
+  { r: 0.97, g: 0.86, b: 0.73, a: 1 },
+  { r: 0.93, g: 0.79, b: 0.64, a: 1 },
+  { r: 0.87, g: 0.71, b: 0.55, a: 1 },
+  { r: 0.79, g: 0.61, b: 0.46, a: 1 },
+  { r: 0.68, g: 0.5, b: 0.38, a: 1 },
+  { r: 0.55, g: 0.39, b: 0.3, a: 1 },
+] as const;
+
+/** 头发色带（亮→暗）：发壳独立基元独立分档。 */
+export const HAIR_BANDS = [
+  { r: 0.42, g: 0.3, b: 0.22, a: 1 },
+  { r: 0.35, g: 0.24, b: 0.17, a: 1 },
+  { r: 0.27, g: 0.18, b: 0.13, a: 1 },
+  { r: 0.2, g: 0.13, b: 0.09, a: 1 },
+] as const;

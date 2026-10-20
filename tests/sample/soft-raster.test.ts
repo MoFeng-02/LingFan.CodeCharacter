@@ -88,9 +88,10 @@ describe("3D 采样器", () => {
     expect(face).toBeDefined();
     const commands = face!.shape.kind === "path" ? face!.shape.commands : [];
     expect(commands).toHaveLength(4);
-    expect(commands[0]).toEqual({ kind: "moveTo", point: { x: 0, y: 0 } });
-    expect(commands[1]).toEqual({ kind: "lineTo", point: { x: 1, y: 0 } });
-    expect(commands[2]).toEqual({ kind: "lineTo", point: { x: 1, y: 1 } });
+    // y 翻转：几何 y=−1 在图像平面映射为 1（数学空间向上、图像向下）
+    expect(commands[0]).toEqual({ kind: "moveTo", point: { x: 0, y: 1 } });
+    expect(commands[1]).toEqual({ kind: "lineTo", point: { x: 1, y: 1 } });
+    expect(commands[2]).toEqual({ kind: "lineTo", point: { x: 1, y: 0 } });
     expect(commands[3]).toEqual({ kind: "closePath" });
   });
 
@@ -113,7 +114,7 @@ describe("3D 采样器", () => {
       second.shape.commands[0]!.kind === "moveTo"
         ? second.shape.commands[0]!.point.y
         : NaN;
-    expect(firstY).toBeGreaterThan(secondY);
+    expect(firstY).toBeLessThan(secondY);
   });
 
   it("面朝向决定色带档位：正对光最亮、偏转取中间档", () => {

@@ -12,26 +12,42 @@ import { describe, expect, it } from "vitest";
  * 同一几何得到不同 2D 轮廓，而非平面拉伸。
  */
 
-function solidOf(state: CharacterState): SolidPrimitive {
+function solidOf(state: CharacterState, index: number): SolidPrimitive {
   const head = state.nodes["appearance.head"];
-  if (!head) throw new Error("头骨节点缺失");
-  const solid = head.primitives[0]?.shape;
+  if (!head) throw new Error("立体节点缺失");
+  const solid = head.primitives[index]?.shape;
   if (!solid || solid.kind !== "solid3d") throw new Error("立体基元缺失");
   return solid;
 }
 
 describe("bust3d 配方", () => {
-  it("求值产出一个立体几何基元，几何顶点表与面索引完备", async () => {
+  it("求值产出头骨与发壳两个立体基元，网格完备且发壳有剔除", async () => {
     const runtime = createCharacterRuntime(bust3dPack);
     const state = await runtime.computeAt(0);
-    const solid = solidOf(state);
-    expect(solid.vertices.length).toBeGreaterThan(10);
-    expect(solid.faces.length).toBeGreaterThan(10);
-    for (const face of solid.faces) {
-      expect(face.a).toBeLessThan(solid.vertices.length);
-      expect(face.b).toBeLessThan(solid.vertices.length);
-      expect(face.c).toBeLessThan(solid.vertices.length);
+    const skull = solidOf(state, 0);
+    const hair = solidOf(state, 1);
+    // 12×16 细分：顶点 = 两极 + 11 环 × 16，面 = 双帽 + 10 环带 × 2
+    expect(skull.vertices.length).toBe(1 + 11 * 16 + 1);
+    expect(skull.faces.length).toBe(2 * 16 + 10 * 16 * 2);
+    expect(hair.vertices.length).toBeGreaterThan(10);
+    // 完整壳面数 = 6 环带 × 16 × 2 + 16 帽；发际线剔除后必然变少但不为空
+    expect(hair.faces.length).toBeGreaterThan(0);
+    expect(hair.faces.length).toBeLessThan(6 * 16 * 2 + 16);
+    for (const solid of [skull, hair]) {
+      for (const face of solid.faces) {
+        expect(face.a).toBeLessThan(solid.vertices.length);
+        expect(face.b).toBeLessThan(solid.vertices.length);
+        expect(face.c).toBeLessThan(solid.vertices.length);
+      }
     }
+  });
+
+  it("五官形变把脸前顶点推出椭球半径", async () => {
+    const runtime = createCharacterRuntime(bust3dPack);
+    const state = await runtime.computeAt(0, { [SLOT.breath]: 0 });
+    const skull = solidOf(state, 0);
+    const maxZ = Math.max(...skull.vertices.map((v) => v.z));
+    expect(maxZ).toBeGreaterThan(0.75);
   });
 
   it("转头改变采样视角：同一几何投影出不同的 2D 轮廓", async () => {
@@ -49,8 +65,8 @@ describe("bust3d 配方", () => {
     const full = await runtime.computeAt(0, { [SLOT.breath]: 1 });
     const spread = (vertices: readonly { x: number }[]): number =>
       Math.max(...vertices.map((v) => Math.abs(v.x)));
-    expect(spread(solidOf(full).vertices)).toBeGreaterThan(
-      spread(solidOf(rest).vertices),
+    expect(spread(solidOf(full, 0).vertices)).toBeGreaterThan(
+      spread(solidOf(rest, 0).vertices),
     );
   });
 

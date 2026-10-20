@@ -18,40 +18,68 @@ import type {
   RenderPrimitive,
 } from "@lingfan-character/contracts";
 import { buildHead } from "./geometry";
-import { DEFAULTS, PITCH_RANGE, RANGES, SLOT, YAW_RANGE } from "./shared";
+import {
+  DEFAULTS,
+  HAIR_BANDS,
+  PITCH_RANGE,
+  RANGES,
+  SKIN_BANDS,
+  SLOT,
+  YAW_RANGE,
+} from "./shared";
 
 const IDENTITY: AffineTransform = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
 
-const SKIN_BANDS = [
-  { r: 0.95, g: 0.82, b: 0.68, a: 1 },
-  { r: 0.85, g: 0.68, b: 0.52, a: 1 },
-  { r: 0.62, g: 0.45, b: 0.34, a: 1 },
-] as const;
-
 const NODE_ID = {
   head: "appearance.head",
+  hair: "appearance.hair",
 } as const;
+
+function solidPrimitive(
+  nodeId: string,
+  vertices: readonly { x: number; y: number; z: number }[],
+  faces: readonly { a: number; b: number; c: number }[],
+  shading: readonly { r: number; g: number; b: number; a: number }[],
+  view: { yaw: number; pitch: number; roll: number },
+  tint: { r: number; g: number; b: number; a: number },
+): RenderPrimitive {
+  return {
+    nodeId,
+    shape: { kind: "solid3d", vertices, faces, shading, view },
+    transform: IDENTITY,
+    tint,
+    blend: "normal",
+    opacity: 1,
+  };
+}
 
 function headStep(inputs: NodeStepInputs, _tMs: number): NodeStepOutputs {
   const turn = inputs.values[SLOT.headTurn] ?? 0;
   const tilt = inputs.values[SLOT.headTilt] ?? 0;
   const breath = inputs.values[SLOT.breath] ?? 0;
-  const { vertices, faces } = buildHead(breath);
-  const primitive: RenderPrimitive = {
-    nodeId: NODE_ID.head,
-    shape: {
-      kind: "solid3d",
-      vertices,
-      faces,
-      shading: SKIN_BANDS,
-      view: { yaw: turn * YAW_RANGE, pitch: tilt * PITCH_RANGE, roll: 0 },
-    },
-    transform: IDENTITY,
-    tint: SKIN_BANDS[0],
-    blend: "normal",
-    opacity: 1,
+  const { skull, hair } = buildHead(breath);
+  const view = { yaw: turn * YAW_RANGE, pitch: tilt * PITCH_RANGE, roll: 0 };
+  return {
+    values: {},
+    primitives: [
+      solidPrimitive(
+        NODE_ID.head,
+        skull.vertices,
+        skull.faces,
+        SKIN_BANDS,
+        view,
+        SKIN_BANDS[0],
+      ),
+      solidPrimitive(
+        NODE_ID.hair,
+        hair.vertices,
+        hair.faces,
+        HAIR_BANDS,
+        view,
+        HAIR_BANDS[0],
+      ),
+    ],
   };
-  return { values: {}, primitives: [primitive] };
 }
 
 export const bust3dPack = {
