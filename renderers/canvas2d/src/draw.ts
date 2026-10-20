@@ -89,13 +89,19 @@ export type TextureResolver = (id: TextureId) => TextureResource | undefined;
 /** 全角弧度：椭圆基元的闭合圆。 */
 const TAU = Math.PI * 2;
 
-/** 源块外扩量（源像素）：浮点采样按半开区间取块，精确等分会在相邻块间漏采样。 */
-const SEAM_PAD = 0.5;
+/**
+ * 相邻单元的重叠比例：按单元边长取比例，而不是取固定源像素数。
+ * 裁剪边界自带约一个设备像素的抗锯齿过渡，重叠必须宽于该过渡，
+ * 否则边界处两个单元都只有半覆盖，缝隙会透出底色。
+ * 比例取值与画幅无关：单元被缩到几个像素时重叠也同比缩小，
+ * 此时接缝已不可见；单元放大时重叠随之变宽，仍能盖住过渡带。
+ */
+const SEAM_RATIO = 0.12;
 
 /**
  * 执行一条网格指令：逐单元「仿射变换 + 裁剪 + 贴图」。
  * 单元 (i, j) 的四点取自行优先顶点表；纹理对应块按等分网格切取，
- * 源块向四周外扩半像素并同步扩大裁剪域——相邻单元重叠同一源内容，
+ * 源块向四周外扩一小段并同步扩大裁剪域——相邻单元重叠同一源内容，
  * 后画覆盖先画，消除接缝；边界侧不外扩以免越出位图。
  */
 function drawMesh(
@@ -118,10 +124,10 @@ function drawMesh(
       if (!v00 || !v10 || !v01) {
         throw new Error(`网格顶点缺失: ${shape.textureId} @${i},${j}`);
       }
-      const padLeft = i > 0 ? SEAM_PAD : 0;
-      const padTop = j > 0 ? SEAM_PAD : 0;
-      const padRight = i < cols - 2 ? SEAM_PAD : 0;
-      const padBottom = j < rows - 2 ? SEAM_PAD : 0;
+      const padLeft = i > 0 ? cellWidth * SEAM_RATIO : 0;
+      const padTop = j > 0 ? cellHeight * SEAM_RATIO : 0;
+      const padRight = i < cols - 2 ? cellWidth * SEAM_RATIO : 0;
+      const padBottom = j < rows - 2 ? cellHeight * SEAM_RATIO : 0;
       const sourceX = i * cellWidth - padLeft;
       const sourceY = j * cellHeight - padTop;
       const sourceW = cellWidth + padLeft + padRight;

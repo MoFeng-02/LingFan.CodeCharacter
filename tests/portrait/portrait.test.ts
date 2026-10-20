@@ -140,8 +140,9 @@ describe("素材轨 portrait 配方", () => {
     }
     expect(first.sx).toBe(0);
     expect(first.sy).toBe(0);
-    expect(last.sx + last.sw).toBe(320);
-    expect(last.sy + last.sh).toBe(480);
+    // 外扩量按单元边长取比例，累计后是浮点数，用近似比较而非逐字节相等。
+    expect(last.sx + last.sw).toBeCloseTo(320, 6);
+    expect(last.sy + last.sh).toBeCloseTo(480, 6);
     expect(second.sx).toBeLessThan(first.sx + first.sw);
   });
 });
