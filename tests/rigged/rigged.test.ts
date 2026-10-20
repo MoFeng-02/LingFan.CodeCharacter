@@ -4,7 +4,9 @@ import type {
 } from "@lingfan-character/contracts";
 import {
   BONE,
+  BONE_ANCHOR,
   BONE_ORDER,
+  BONE_RADIUS,
   EYE_BAND,
   GRID_COLS,
   GRID_ROWS,
@@ -37,6 +39,28 @@ const SCALE = 512;
 const runtime = createCharacterRuntime(riggedPortraitPack);
 const VERTEX_COUNT = GRID_COLS * GRID_ROWS;
 
+/** 静止网格：用于比较位移。 */
+const REST = restGrid();
+
+/** 把归一化纵向坐标换成最近的行号：行距 1/(GRID_ROWS−1)。 */
+const rowAt = (y: number): number =>
+  Math.max(0, Math.min(GRID_ROWS - 1, Math.round(y * (GRID_ROWS - 1))));
+
+/** 把归一化横向坐标换成最近的列号：列距 1/(GRID_COLS−1)。 */
+const colAt = (x: number): number =>
+  Math.max(0, Math.min(GRID_COLS - 1, Math.round(x * (GRID_COLS - 1))));
+
+/** 头部采样行：锚点 y 处（解剖中心），下标由锚点推导而非手写行号。 */
+const HEAD_ROW = rowAt(BONE_ANCHOR[BONE.head].y);
+/** 胸廓采样行：胸骨骼锚点处，呼吸抬升在此处最明显。 */
+const CHEST_ROW = rowAt(BONE_ANCHOR[BONE.chest].y);
+/** 裙摆采样行：裙骨骼下缘附近，远离胸廓，不应承接呼吸。 */
+const SKIRT_ROW = rowAt(
+  BONE_ANCHOR[BONE.skirtCenter].y + BONE_RADIUS[BONE.skirtCenter].ry * 0.85,
+);
+/** 躯干中线列：锚点 x 处（人不居中，不能取画布正中）。 */
+const MID_COL = colAt(BONE_ANCHOR[BONE.chest].x);
+
 /** 静息参数：全部通道归零，摆动锚点设在过去（已平息）。 */
 const STILL: Partial<Record<SlotId, number>> = {
   [SLOT.breathe]: 0,
@@ -68,9 +92,6 @@ async function verticesAt(
 /** 行优先索引：第 row 行第 col 列。 */
 const at = (points: readonly NormalizedPoint[], row: number, col: number) =>
   points[row * GRID_COLS + col]!;
-
-/** 静止网格：用于比较位移。 */
-const REST = restGrid();
 
 describe("单图权重蒙皮", () => {
   it("网格规模与纹理标识符合声明", async () => {
@@ -118,9 +139,9 @@ describe("单图权重蒙皮", () => {
   it("转头把头部与裙摆分开牵引", async () => {
     const still = await verticesAt(1200, STILL);
     const turned = await verticesAt(1200, { ...STILL, [SLOT.headTurn]: 1 });
-    // 头部顶点（靠上半部）横移应显著大于裙摆底部顶点。
-    const headIndex = 8 * GRID_COLS + Math.floor(GRID_COLS / 2);
-    const skirtIndex = 52 * GRID_COLS + Math.floor(GRID_COLS / 2);
+    // 头部顶点（头部锚点所在行）横移应显著大于裙摆底部顶点。
+    const headIndex = HEAD_ROW * GRID_COLS + MID_COL;
+    const skirtIndex = SKIRT_ROW * GRID_COLS + MID_COL;
     const headShift = turned[headIndex]!.x - still[headIndex]!.x;
     const skirtShift = turned[skirtIndex]!.x - still[skirtIndex]!.x;
     expect(headShift).toBeGreaterThan(0.01);
@@ -132,15 +153,13 @@ describe("单图权重蒙皮", () => {
     // 取相位峰与接缝两点比较，位移差才等于完整抬升量。
     const peak = await verticesAt(2100, { ...STILL, [SLOT.breathe]: 1 });
     const seam = await verticesAt(4200, { ...STILL, [SLOT.breathe]: 1 });
-    const chestRow = 12;
-    const col = Math.floor(GRID_COLS / 2);
-    const chestIndex = chestRow * GRID_COLS + col;
+    const chestIndex = CHEST_ROW * GRID_COLS + MID_COL;
     // 抬升是负 y 方向（画布向下为正），两点差值应等于 BREATH_LIFT 量级。
     const chestRise = Math.abs(seam[chestIndex]!.y - peak[chestIndex]!.y);
     expect(chestRise).toBeGreaterThan(0.004);
 
     // 裙摆只被骨骼自身链条牵引，不承接呼吸——位移应远小于胸廓。
-    const skirtIndex = 52 * GRID_COLS + col;
+    const skirtIndex = SKIRT_ROW * GRID_COLS + MID_COL;
     const skirtShift = Math.abs(seam[skirtIndex]!.y - peak[skirtIndex]!.y);
     expect(skirtShift).toBeLessThan(chestRise * 0.2);
   });

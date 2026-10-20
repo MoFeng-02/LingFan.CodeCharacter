@@ -55,8 +55,9 @@ export const RANGES: Readonly<
 /**
  * 网格密度：列数 × 行数控制点。
  * 越高越贴合原画的轮廓与五官，代价是每帧逐单元贴图的填充次数
- * （单元数 = (cols−1)×(rows−1)）；36×54 在 512 画布上约两千次填充，
- * 是「轮廓平滑可辨」与「实时帧率」的平衡点。
+ * （单元数 = (cols−1)×(rows−1)）；36×54 约两千次填充，是「轮廓平滑
+ * 可辨」与「实时帧率」的平衡点。竖向画幅（长边 512）下单元格约十
+ * 像素见方，够勾勒眼线与唇形，无需再加密。
  */
 export const GRID_COLS = 36;
 export const GRID_ROWS = 54;
@@ -101,43 +102,48 @@ export const BONE_ORDER: readonly BoneId[] = [
 
 /**
  * 骨骼锚点：变换绕该点进行，也是权重区域的圆心。
- * 数值取自正面站姿的解剖比例——颈部在头与胸之间、腰在躯干中段、
- * 发帘锚在颈根（发从颈后垂下）、袖摆锚在肩、裙摆锚在胯。
+ *
+ * 口径是「正面站姿全身立绘」的解剖比例：头顶在上边缘略下、眼线约在
+ * 画高七分之一处、下颌与颈接近五分之一、肩在四分之一、胸在三成、
+ * 腰在四成半、胯在正中、裙摆最宽略过正中、脚接近下边缘。竖向构图下
+ * 人物不居中，躯干轴略偏画布中线的右侧（真实立绘常见偏侧站姿），
+ * 因此横向锚点统一取同一 u，避免头部与躯干各走一条轴。
  */
 export const BONE_ANCHOR: Readonly<Record<BoneId, { x: number; y: number }>> = {
-  [BONE.root]: { x: 0.5, y: 0.98 },
-  [BONE.chest]: { x: 0.5, y: 0.235 },
-  [BONE.waist]: { x: 0.5, y: 0.36 },
-  [BONE.head]: { x: 0.5, y: 0.168 },
-  [BONE.jaw]: { x: 0.5, y: 0.135 },
-  [BONE.hairLeft]: { x: 0.29, y: 0.185 },
-  [BONE.hairRight]: { x: 0.71, y: 0.185 },
-  [BONE.sleeveLeft]: { x: 0.235, y: 0.245 },
-  [BONE.sleeveRight]: { x: 0.765, y: 0.245 },
-  [BONE.skirtCenter]: { x: 0.5, y: 0.44 },
-  [BONE.skirtLeft]: { x: 0.3, y: 0.44 },
-  [BONE.skirtRight]: { x: 0.7, y: 0.44 },
+  [BONE.root]: { x: 0.52, y: 0.98 },
+  [BONE.chest]: { x: 0.52, y: 0.3 },
+  [BONE.waist]: { x: 0.52, y: 0.43 },
+  [BONE.head]: { x: 0.52, y: 0.115 },
+  [BONE.jaw]: { x: 0.52, y: 0.178 },
+  [BONE.hairLeft]: { x: 0.44, y: 0.21 },
+  [BONE.hairRight]: { x: 0.6, y: 0.21 },
+  [BONE.sleeveLeft]: { x: 0.39, y: 0.28 },
+  [BONE.sleeveRight]: { x: 0.65, y: 0.28 },
+  [BONE.skirtCenter]: { x: 0.52, y: 0.68 },
+  [BONE.skirtLeft]: { x: 0.4, y: 0.68 },
+  [BONE.skirtRight]: { x: 0.64, y: 0.68 },
 };
 
 /**
  * 权重区域：椭圆半径（归一化）描述该骨骼「牵引力」的有效范围。
  * 区域重叠是必要的——重叠处权重按比例混合，形变才连续无缝；
  * 刻意不做硬边界，硬边界会在交界处撕开画面。
+ * 半径按解剖跨度取：头区覆盖头顶到下颌、裙区从胯盖到脚踝。
  */
 export const BONE_RADIUS: Readonly<Record<BoneId, { rx: number; ry: number }>> =
   {
     [BONE.root]: { rx: 1, ry: 1 },
-    [BONE.chest]: { rx: 0.2, ry: 0.145 },
-    [BONE.waist]: { rx: 0.17, ry: 0.11 },
-    [BONE.head]: { rx: 0.155, ry: 0.1 },
-    [BONE.jaw]: { rx: 0.115, ry: 0.055 },
-    [BONE.hairLeft]: { rx: 0.145, ry: 0.3 },
-    [BONE.hairRight]: { rx: 0.145, ry: 0.3 },
-    [BONE.sleeveLeft]: { rx: 0.115, ry: 0.15 },
-    [BONE.sleeveRight]: { rx: 0.115, ry: 0.15 },
-    [BONE.skirtCenter]: { rx: 0.34, ry: 0.3 },
-    [BONE.skirtLeft]: { rx: 0.26, ry: 0.28 },
-    [BONE.skirtRight]: { rx: 0.26, ry: 0.28 },
+    [BONE.chest]: { rx: 0.16, ry: 0.1 },
+    [BONE.waist]: { rx: 0.13, ry: 0.08 },
+    [BONE.head]: { rx: 0.085, ry: 0.09 },
+    [BONE.jaw]: { rx: 0.05, ry: 0.03 },
+    [BONE.hairLeft]: { rx: 0.09, ry: 0.26 },
+    [BONE.hairRight]: { rx: 0.09, ry: 0.26 },
+    [BONE.sleeveLeft]: { rx: 0.1, ry: 0.12 },
+    [BONE.sleeveRight]: { rx: 0.1, ry: 0.12 },
+    [BONE.skirtCenter]: { rx: 0.26, ry: 0.42 },
+    [BONE.skirtLeft]: { rx: 0.2, ry: 0.4 },
+    [BONE.skirtRight]: { rx: 0.2, ry: 0.4 },
   };
 
 /**
@@ -168,14 +174,17 @@ export const HEAD_TILT_RAD = 0.018;
 /** 眨眼：眼带纵向压缩比例上限（单图没有眼睑层，只能压缩眼区）。 */
 export const BLINK_SQUEEZE = 0.55;
 
-/** 眼带中心与半径：用于眨眼压缩的作用域。 */
-export const EYE_BAND = { x: 0.492, y: 0.0965, rx: 0.088, ry: 0.0215 } as const;
+/**
+ * 眼带中心与半径：眨眼压缩的作用域。
+ *
+ * 眼线落在头锚点之下约画高百分之二处，横向略窄于面部轮廓，
+ * 故 rx 取面部半宽的六成、ry 取小于一行的窄带——只压缩眼线那一行
+ * 附近的顶点，避免连面颊一起塌陷。
+ */
+export const EYE_BAND = { x: 0.52, y: 0.136, rx: 0.05, ry: 0.014 } as const;
 
-/** 张嘴：下颌带下移量上限（归一化）。 */
+/** 张嘴：下颌下移量上限（归一化）：约 1/110 画高，读作说话而非大张口。 */
 export const JAW_DROP = 0.009;
-
-/** 下颌带中心与半径。 */
-export const JAW_BAND = { x: 0.492, y: 0.125, rx: 0.075, ry: 0.028 } as const;
 
 /** 风场噪声：低频三段倍频程，让摆动带呼吸般的随机起伏。 */
 export const WIND_NOISE = {
