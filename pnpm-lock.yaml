@@ -26,6 +26,9 @@ importers:
       '@lingfan-character/renderer-canvas2d':
         specifier: workspace:*
         version: link:renderers/canvas2d
+      '@lingfan-character/renderer-soft-raster':
+        specifier: workspace:*
+        version: link:renderers/soft-raster
     devDependencies:
       esbuild:
         specifier: ^0.28.2
@@ -93,6 +96,15 @@ importers:
       '@lingfan-character/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+
+  renderers/soft-raster:
+    dependencies:
+      '@lingfan-character/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@lingfan-character/primitives':
+        specifier: workspace:*
+        version: link:../../packages/primitives
 
 packages:
 

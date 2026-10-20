@@ -109,10 +109,11 @@ export default [
               group: [
                 "@lingfan-character/kernel",
                 "@lingfan-character/pack-*",
+                "@lingfan-character/example-*",
                 "@lingfan-character/renderer-*",
-                "@lingfan-character/primitives",
               ],
-              message: "渲染器只依赖 contracts，互不知晓。",
+              message:
+                "渲染器依赖 contracts 与共享数学库 primitives，互不知晓：禁内核、域包与渲染器互依。",
             },
           ],
         },
