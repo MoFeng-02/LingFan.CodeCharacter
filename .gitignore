@@ -19,3 +19,6 @@ examples/browser/assets/
 
 # VitePress 本地缓存与构建产物
 docs/.vitepress/cache/
+
+# 工具原子写残留锁文件
+.dsh-ops-update-*.lock
