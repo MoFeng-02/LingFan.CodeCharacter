@@ -23,6 +23,8 @@ import {
   portraitPack,
   TEXTURE_ID as PORTRAIT_TEXTURE,
 } from "@lingfan-character/example-portrait";
+import { bust3dPack } from "@lingfan-character/example-bust3d";
+import { sampleState } from "@lingfan-character/renderer-soft-raster";
 import {
   buildDrawPlan,
   draw,
@@ -305,9 +307,10 @@ speakButton?.addEventListener("click", () => {
  * 切换只改配方与面板可见性。纹理注册表住组合根——纹理是宿主
  * 资源，不进状态向量；网格形变仍是纯函数（tests 已验收）。
  */
-type Mode = "humanoid" | "portrait";
+type Mode = "humanoid" | "portrait" | "bust3d";
 let mode: Mode = "humanoid";
 const portraitRuntime = createCharacterRuntime(portraitPack);
+const bust3dRuntime = createCharacterRuntime(bust3dPack);
 const textures = new Map<string, TextureResource>();
 
 function resolveTexture(id: string): TextureResource | undefined {
@@ -350,16 +353,18 @@ const humanoidSections = [
 
 function setMode(next: Mode): void {
   mode = next;
-  const portraitOn = next === "portrait";
   for (const button of modeButtons) {
     button.classList.toggle("active", button.dataset.mode === next);
   }
   for (const section of humanoidSections) {
-    section?.classList.toggle("hidden", portraitOn);
+    section?.classList.toggle("hidden", next !== "humanoid");
   }
   document
     .querySelector<HTMLElement>("#panel-portrait")
-    ?.classList.toggle("hidden", !portraitOn);
+    ?.classList.toggle("hidden", next !== "portrait");
+  document
+    .querySelector<HTMLElement>("#panel-bust3d")
+    ?.classList.toggle("hidden", next !== "bust3d");
 }
 
 for (const button of modeButtons) {
@@ -399,10 +404,18 @@ async function frame(now: number): Promise<void> {
   } else {
     delete overrides[SLOT.mouthDrive];
   }
-  const state = await (mode === "portrait" ? portraitRuntime : runtime).computeAt(
-    tMs,
-    overrides,
-  );
+  const activeRuntime =
+    mode === "portrait"
+      ? portraitRuntime
+      : mode === "bust3d"
+        ? bust3dRuntime
+        : runtime;
+  let state = await activeRuntime.computeAt(tMs, overrides);
+  if (mode === "bust3d") {
+    // 立体模式：几何求值后经 2D 采样器编译成既有指令流——执行层与
+    // 指纹机器零改动，转头效果来自视角重采样而非平面位移。
+    state = sampleState(state);
+  }
   const scale = Math.min(stage.width, stage.height);
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
