@@ -89,9 +89,14 @@ export type TextureResolver = (id: TextureId) => TextureResource | undefined;
 /** 全角弧度：椭圆基元的闭合圆。 */
 const TAU = Math.PI * 2;
 
+/** 源块外扩量（源像素）：浮点采样按半开区间取块，精确等分会在相邻块间漏采样。 */
+const SEAM_PAD = 0.5;
+
 /**
  * 执行一条网格指令：逐单元「仿射变换 + 裁剪 + 贴图」。
- * 单元 (i, j) 的四点取自行优先顶点表；纹理对应块按等分网格切取。
+ * 单元 (i, j) 的四点取自行优先顶点表；纹理对应块按等分网格切取，
+ * 源块向四周外扩半像素并同步扩大裁剪域——相邻单元重叠同一源内容，
+ * 后画覆盖先画，消除接缝；边界侧不外扩以免越出位图。
  */
 function drawMesh(
   context: DrawingContext,
@@ -113,6 +118,14 @@ function drawMesh(
       if (!v00 || !v10 || !v01) {
         throw new Error(`网格顶点缺失: ${shape.textureId} @${i},${j}`);
       }
+      const padLeft = i > 0 ? SEAM_PAD : 0;
+      const padTop = j > 0 ? SEAM_PAD : 0;
+      const padRight = i < cols - 2 ? SEAM_PAD : 0;
+      const padBottom = j < rows - 2 ? SEAM_PAD : 0;
+      const sourceX = i * cellWidth - padLeft;
+      const sourceY = j * cellHeight - padTop;
+      const sourceW = cellWidth + padLeft + padRight;
+      const sourceH = cellHeight + padTop + padBottom;
       context.save();
       // 单位正方形 (0,0)(1,0)(0,1) 映射到单元三点：基向量差即矩阵系数。
       context.transform(
@@ -123,19 +136,25 @@ function drawMesh(
         v00[0],
         v00[1],
       );
+      // 裁剪域与源块同步外扩，保持采样与显示范围一致。
       context.beginPath();
-      context.rect(0, 0, 1, 1);
+      context.rect(
+        -padLeft / cellWidth,
+        -padTop / cellHeight,
+        sourceW / cellWidth,
+        sourceH / cellHeight,
+      );
       context.clip();
       context.drawImage(
         resource.image,
-        i * cellWidth,
-        j * cellHeight,
-        cellWidth,
-        cellHeight,
-        0,
-        0,
-        1,
-        1,
+        sourceX,
+        sourceY,
+        sourceW,
+        sourceH,
+        -padLeft / cellWidth,
+        -padTop / cellHeight,
+        sourceW / cellWidth,
+        sourceH / cellHeight,
       );
       context.restore();
     }

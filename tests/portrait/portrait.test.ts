@@ -19,7 +19,8 @@ const SCALE = 512;
 
 /** 记录式画布替身：验证执行层的单元贴图行为。 */
 class Probe implements DrawingContext {
-  readonly drawnImages: string[] = [];
+  readonly drawnImages: { sx: number; sy: number; sw: number; sh: number }[] =
+    [];
   globalCompositeOperation = "";
   globalAlpha = 1;
   fillStyle = "";
@@ -42,12 +43,12 @@ class Probe implements DrawingContext {
     sy: number,
     sw: number,
     sh: number,
-    dx: number,
-    dy: number,
-    dw: number,
-    dh: number,
+    _dx: number,
+    _dy: number,
+    _dw: number,
+    _dh: number,
   ): void {
-    this.drawnImages.push(`${sx},${sy},${sw},${sh} -> ${dx},${dy},${dw},${dh}`);
+    this.drawnImages.push({ sx, sy, sw, sh });
   }
 }
 
@@ -121,5 +122,26 @@ describe("素材轨 portrait 配方", () => {
       height: 480,
     }));
     expect(probe.drawnImages.length).toBe((mesh.cols - 1) * (mesh.rows - 1));
+  });
+
+  it("源块外扩覆盖全图无采样缝隙", async () => {
+    const plan = buildDrawPlan(await stateAt(0), SCALE);
+    const probe = new Probe();
+    draw(probe, plan, () => ({
+      image: {} as CanvasImageSource,
+      width: 320,
+      height: 480,
+    }));
+    const first = probe.drawnImages[0];
+    const second = probe.drawnImages[1];
+    const last = probe.drawnImages[probe.drawnImages.length - 1];
+    if (!first || !second || !last) {
+      throw new Error("执行层未产生贴图调用");
+    }
+    expect(first.sx).toBe(0);
+    expect(first.sy).toBe(0);
+    expect(last.sx + last.sw).toBe(320);
+    expect(last.sy + last.sh).toBe(480);
+    expect(second.sx).toBeLessThan(first.sx + first.sw);
   });
 });
