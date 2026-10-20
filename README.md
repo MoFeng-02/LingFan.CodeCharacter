@@ -33,3 +33,24 @@ tests/               全仓测试（根目录集中，不与源码同置）
 | 格式化             | `pnpm format`     |
 
 包管理器只用 pnpm；提交前必须通过 `pnpm lint`。
+
+## 嵌入调用
+
+本仓不持有时间线：占用多少毫秒、采用多少 FPS 全由调用方驱动。把角色嵌进任何
+「时间 × 采样」的宿主（视频引擎、游戏循环、编排器）只需三步：
+
+```ts
+import { createCharacterRuntime } from "@lingfan-character/kernel";
+import { humanoidPack } from "@lingfan-character/example-humanoid";
+import { buildDrawPlan, draw } from "@lingfan-character/renderer-canvas2d";
+
+const runtime = createCharacterRuntime(humanoidPack);
+
+// 宿主在任意时刻 t（毫秒）与任意采样密度下调用：
+const state = await runtime.computeAt(tMs); // 纯函数，同 t 两遍逐字节一致
+const plan = buildDrawPlan(state, 512); // 纯数据指令流，可重组后再执行
+draw(ctx, plan); // 或交给任何能执行该指令流的渲染端
+```
+
+完整跨引擎实例见 LingFan.CodeVideo 仓的 `examples/character-layer/`：
+角色作为场景里的一层由视频引擎的时间线驱动，角色域零改动。
