@@ -17,6 +17,7 @@ import type {
 import {
   CHARACTER_COORDINATE_SPACE,
   createCharacterRuntime,
+  validateBasisSpace,
   validateState,
 } from "@lingfan-character/kernel";
 
@@ -331,5 +332,156 @@ describe("状态验证", () => {
     const state = await runtime.computeAt(0);
     const results = validateState(pack, state);
     expect(results.map((result) => result.ok)).toEqual([true, true]);
+  });
+});
+
+describe("基空间校验", () => {
+  /** 合法单基对：左右成对、双向指名、绑定存在的节点。 */
+  const validBase = (): CharacterPack["basis"] => ({
+    bases: [
+      {
+        name: "demo.core.level",
+        region: "core",
+        side: "left",
+        group: "core-pair",
+        bindTargets: ["demo.core.writer"],
+        pair: "demo.core.in-r",
+      },
+      {
+        name: "demo.core.in-r",
+        region: "core",
+        side: "right",
+        group: "core-pair",
+        bindTargets: ["demo.core.writer"],
+        pair: "demo.core.level",
+      },
+    ],
+  });
+
+  it("六要素齐备的基空间合法；未声明基空间的配方视为合法", () => {
+    expect(validateBasisSpace(basePack()).ok).toBe(true);
+    const withBasis = basePack();
+    withBasis.slots = [
+      ...withBasis.slots,
+      { name: "demo.core.in-r", direction: "input" },
+    ];
+    withBasis.basis = validBase();
+    expect(validateBasisSpace(withBasis)).toEqual({ ok: true, failures: [] });
+  });
+
+  it("基必须指向已声明的输入槽", () => {
+    const pack = basePack();
+    pack.basis = {
+      bases: [
+        {
+          name: "demo.core.ghost",
+          region: "core",
+          side: "center",
+          group: "g",
+          bindTargets: ["demo.core.writer"],
+        },
+      ],
+    };
+    const result = validateBasisSpace(pack);
+    expect(result.ok).toBe(false);
+    expect(
+      result.failures.some((failure) => failure.includes("demo.core.ghost")),
+    ).toBe(true);
+  });
+
+  it("侧向基必须成对且双向指名；中间基不得声明成对", () => {
+    const pack = basePack();
+    pack.basis = {
+      bases: [
+        {
+          name: "demo.core.level",
+          region: "core",
+          side: "left",
+          group: "g",
+          bindTargets: ["demo.core.writer"],
+          pair: "demo.core.missing",
+        },
+        {
+          name: "demo.core.right",
+          region: "core",
+          side: "right",
+          group: "g",
+          bindTargets: ["demo.core.writer"],
+        },
+        {
+          name: "demo.core.out",
+          region: "core",
+          side: "center",
+          group: "g",
+          bindTargets: ["demo.core.writer"],
+          pair: "demo.core.level",
+        },
+      ],
+    };
+    const failures = validateBasisSpace(pack).failures;
+    expect(
+      failures.some((failure) =>
+        failure.includes("成对基 demo.core.missing 不存在"),
+      ),
+    ).toBe(true);
+    expect(failures.some((failure) => failure.includes("未声明成对基"))).toBe(
+      true,
+    );
+    expect(
+      failures.some((failure) => failure.includes("中间基但声明了成对基")),
+    ).toBe(true);
+  });
+
+  it("绑定目标必须存在；重复声明判失败", () => {
+    const pack = basePack();
+    pack.basis = {
+      bases: [
+        {
+          name: "demo.core.level",
+          region: "core",
+          side: "center",
+          group: "g",
+          bindTargets: ["demo.core.ghost"],
+        },
+        {
+          name: "demo.core.level",
+          region: "core",
+          side: "center",
+          group: "g",
+          bindTargets: ["demo.core.writer"],
+        },
+      ],
+    };
+    const failures = validateBasisSpace(pack).failures;
+    expect(
+      failures.some((failure) => failure.includes("demo.core.ghost 不存在")),
+    ).toBe(true);
+    expect(failures.some((failure) => failure.includes("重复声明"))).toBe(true);
+  });
+
+  it("耦合目标必须落在配方槽位内且增益有限", () => {
+    const pack = basePack();
+    pack.basis = {
+      bases: [
+        {
+          name: "demo.core.level",
+          region: "core",
+          side: "center",
+          group: "g",
+          bindTargets: ["demo.core.writer"],
+          couplings: [
+            { to: "demo.core.nowhere", gain: 0.5 },
+            { to: "demo.core.out", gain: Number.NaN },
+          ],
+        },
+      ],
+    };
+    const failures = validateBasisSpace(pack).failures;
+    expect(
+      failures.some((failure) => failure.includes("demo.core.nowhere")),
+    ).toBe(true);
+    expect(
+      failures.some((failure) => failure.includes("增益必须是有限数")),
+    ).toBe(true);
   });
 });

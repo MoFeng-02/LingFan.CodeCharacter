@@ -20,4 +20,4 @@ export {
   type CompileErrorKind,
   type ComputeErrorKind,
 } from "./errors";
-export { validateState } from "./validate";
+export { validateBasisSpace, validateState } from "./validate";

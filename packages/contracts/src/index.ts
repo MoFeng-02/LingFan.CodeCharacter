@@ -61,6 +61,13 @@ export type {
 } from "./sample";
 
 export type {
+  BasisCoupling,
+  BasisDeclaration,
+  BasisSide,
+  BasisSpace,
+} from "./basis";
+
+export type {
   InboundDeclaration,
   OutboundDeclaration,
   SceneLink,

@@ -7,6 +7,7 @@ import {
   CHARACTER_COORDINATE_SPACE,
   compile,
   createCharacterRuntime,
+  validateBasisSpace,
   validateState,
 } from "@lingfan-character/kernel";
 import { createSpeechEnvelope } from "@lingfan-character/example-humanoid/demo";
@@ -390,5 +391,12 @@ describe("humanoid 域包", () => {
       (await runtime.computeAt(3000, overrides)).nodes[NODE_ID.hairFront]!
         .primitives[1]!.transform.e;
     expect(await strandE({ [SLOT.wind]: 1 })).not.toBe(await strandE({}));
+  });
+
+  it("基空间：19 基声明通过契约校验器", () => {
+    expect(validateBasisSpace(humanoidPack)).toEqual({
+      ok: true,
+      failures: [],
+    });
   });
 });

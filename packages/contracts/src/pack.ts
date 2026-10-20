@@ -8,6 +8,7 @@
  *          且无显式顺序）在编译期判为违规；内置缺省属于契约，跨实现必须一致。
  */
 
+import type { BasisSpace } from "./basis";
 import type { DependencyEdge, NodeDeclaration } from "./node";
 import type { CharacterState, SlotName } from "./state";
 import type { SubstepPolicy } from "./sample";
@@ -63,4 +64,6 @@ export interface CharacterPack {
   readonly validations: readonly PackValidation[];
   /** 域内含动力学的节点所需的固定子步进策略；无动力学时声明固定 1 次亦可。 */
   readonly substep: SubstepPolicy;
+  /** 基空间声明（可选）：基元数据与校验入口；缺省表示配方未使用基。 */
+  readonly basis?: BasisSpace;
 }

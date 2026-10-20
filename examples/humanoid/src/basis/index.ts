@@ -5,3 +5,4 @@ export type { EyeDeform } from "./eyes";
 export { lipDeform } from "./lips";
 export type { LipDeform } from "./lips";
 export { cheekDeform } from "./cheeks";
+export { humanoidBasis } from "./space";

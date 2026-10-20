@@ -4,6 +4,7 @@ import { faceNode } from "./appearance/face";
 import { hairBackNode } from "./appearance/hairBack";
 import { hairFrontNode } from "./appearance/hairFront";
 import { mouthNode } from "./appearance/mouth";
+import { humanoidBasis } from "./basis";
 import { humanoidValidations } from "./constraints";
 import { smileChainNode } from "./coupling/smileChain";
 import { blinkNode } from "./params/blink";
@@ -143,8 +144,9 @@ export const humanoidPack: CharacterPack = {
   edges: [],
   validations: humanoidValidations(),
   substep: { kind: "fixed", count: 1 },
+  basis: humanoidBasis,
 };
 
 /** 槽位与节点标识的统一出口：组合根、测试与渲染器按名引用时从这里取。 */
-export { SLOT, DEFAULTS, RANGES, NODE_ID, BASIS_SLOT_KEYS };
+export { SLOT, DEFAULTS, RANGES, NODE_ID, BASIS_SLOT_KEYS, humanoidBasis };
 export type { SlotKey, SlotId } from "./shared";
