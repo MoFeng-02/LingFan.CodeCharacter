@@ -30,6 +30,7 @@ import {
   transitionValue,
   type Transition,
 } from "./transition";
+import { createAudioSource } from "./audioSource";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#stage");
 const context = canvas?.getContext("2d");
@@ -227,18 +228,64 @@ function wireExpressions(): void {
 let epoch: number | null = null;
 
 /**
- * 说话开关：开启时每帧把包络值写进嘴部驱动槽，关闭时撤掉覆盖。
- * 驱动值是场景→角色的入向数据，角色配方不感知「说话」概念。
+ * 嘴部驱动源：合成包络（按钮开关）与音频文件（播放即驱动）互斥，
+ * 音频播放优先——两者都只是场景→角色的入向 0..1 数据，角色配方
+ * 不感知「说话」概念，也不知道驱动源是程序合成还是真实录音。
  */
 const speakButton = document.querySelector<HTMLButtonElement>("#speak");
 const speech = createSpeechEnvelope("lip-sync-demo", 300_000);
 let speaking = false;
-speakButton?.addEventListener("click", () => {
-  speaking = !speaking;
-  speakButton.textContent = speaking ? "停止说话" : "开始说话";
-  if (!speaking) {
+
+function setSpeaking(value: boolean): void {
+  speaking = value;
+  if (speakButton) {
+    speakButton.textContent = value ? "停止说话" : "开始说话";
+  }
+  if (!value) {
     delete overrides[SLOT.mouthDrive];
   }
+}
+
+const audio = createAudioSource();
+const audioFile = document.querySelector<HTMLInputElement>("#audio-file");
+const audioPlay = document.querySelector<HTMLButtonElement>("#audio-play");
+
+audioFile?.addEventListener("change", async () => {
+  const file = audioFile.files?.[0];
+  if (!file || !audioPlay) return;
+  audioPlay.disabled = true;
+  try {
+    await audio.load(file);
+  } catch (error) {
+    audioPlay.textContent = "解码失败";
+    console.error(error);
+    return;
+  }
+  audioPlay.disabled = false;
+  audioPlay.textContent = "播放音频";
+});
+
+audio.onEnded(() => {
+  if (audioPlay) {
+    audioPlay.textContent = "播放音频";
+  }
+});
+
+audioPlay?.addEventListener("click", () => {
+  if (!audio.loadedName) return;
+  setSpeaking(false);
+  if (audio.driveValue() !== null) {
+    audio.stop();
+    audioPlay.textContent = "播放音频";
+  } else {
+    audio.play();
+    audioPlay.textContent = "停止音频";
+  }
+});
+
+speakButton?.addEventListener("click", () => {
+  audio.stop();
+  setSpeaking(!speaking);
 });
 
 async function frame(now: number): Promise<void> {
@@ -247,8 +294,13 @@ async function frame(now: number): Promise<void> {
   }
   const tMs = now - epoch;
   tickTransitions(tMs);
-  if (speaking) {
+  const audioDrive = audio.driveValue();
+  if (audioDrive !== null) {
+    overrides[SLOT.mouthDrive] = audioDrive;
+  } else if (speaking) {
     overrides[SLOT.mouthDrive] = speech.at(tMs);
+  } else {
+    delete overrides[SLOT.mouthDrive];
   }
   const state = await runtime.computeAt(tMs, overrides);
   const scale = Math.min(stage.width, stage.height);
@@ -258,7 +310,8 @@ async function frame(now: number): Promise<void> {
   const plan = buildDrawPlan(state, scale);
   draw(drawingTarget, plan);
   if (status) {
-    status.textContent = `t=${tMs}ms · 绘制指令 ${plan.commands.length} 条`;
+    const source = audioDrive !== null ? "音频" : speaking ? "合成" : "无";
+    status.textContent = `t=${tMs}ms · 绘制指令 ${plan.commands.length} 条 · 嘴驱动=${source}`;
   }
 
   requestAnimationFrame(frame);
