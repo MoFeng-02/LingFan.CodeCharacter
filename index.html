@@ -68,7 +68,8 @@
         display: none !important;
       }
       #panel-portrait,
-      #panel-bust3d {
+      #panel-bust3d,
+      #panel-layered {
         display: flex;
         flex-wrap: wrap;
         gap: 12px 28px;
@@ -79,13 +80,15 @@
         font-size: 13px;
       }
       #panel-portrait label,
-      #panel-bust3d label {
+      #panel-bust3d label,
+      #panel-layered label {
         display: flex;
         align-items: center;
         gap: 8px;
       }
       #panel-portrait input[type="range"],
-      #panel-bust3d input[type="range"] {
+      #panel-bust3d input[type="range"],
+      #panel-layered input[type="range"] {
         width: 110px;
       }
     </style>
@@ -96,6 +99,7 @@
         <button type="button" data-mode="humanoid" class="active">程序角色</button>
         <button type="button" data-mode="portrait">素材立绘</button>
         <button type="button" data-mode="bust3d">立体半身</button>
+        <button type="button" data-mode="layered">分层立绘</button>
       </section>
       <canvas id="stage" width="512" height="512"></canvas>
       <section id="panel">
@@ -195,6 +199,40 @@
         <label>呼吸
           <input type="range" min="0" max="1" step="0.01" value="0.5"
                  data-param="bust3d.params.breath" />
+        </label>
+      </section>
+      <section id="panel-layered" class="hidden">
+        <label>转头
+          <input type="range" min="-1" max="1" step="0.01" value="0"
+                 data-param="layered.params.head-turn" />
+        </label>
+        <label>眨眼
+          <input type="range" min="0" max="1" step="0.01" value="0"
+                 data-param="layered.params.blink" />
+        </label>
+        <label>视线横
+          <input type="range" min="-1" max="1" step="0.01" value="0"
+                 data-param="layered.params.gaze-x" />
+        </label>
+        <label>视线竖
+          <input type="range" min="-1" max="1" step="0.01" value="0"
+                 data-param="layered.params.gaze-y" />
+        </label>
+        <label>微笑
+          <input type="range" min="0" max="1" step="0.01" value="0.2"
+                 data-param="layered.params.smile" />
+        </label>
+        <label>张嘴
+          <input type="range" min="0" max="1" step="0.01" value="0"
+                 data-param="layered.params.mouth-open" />
+        </label>
+        <label>呼吸
+          <input type="range" min="0" max="1" step="0.01" value="0.4"
+                 data-param="layered.params.breathe" />
+        </label>
+        <label>风
+          <input type="range" min="0" max="1" step="0.01" value="0"
+                 data-param="layered.params.wind" />
         </label>
       </section>
     </main>

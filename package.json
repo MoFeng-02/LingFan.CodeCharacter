@@ -28,6 +28,7 @@
     "@lingfan-character/contracts": "workspace:*",
     "@lingfan-character/example-bust3d": "workspace:*",
     "@lingfan-character/example-humanoid": "workspace:*",
+    "@lingfan-character/example-layered": "workspace:*",
     "@lingfan-character/example-portrait": "workspace:*",
     "@lingfan-character/kernel": "workspace:*",
     "@lingfan-character/primitives": "workspace:*",

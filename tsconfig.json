@@ -11,6 +11,7 @@
       "@lingfan-character/example-humanoid/demo": ["examples/humanoid/src/demo/index.ts"],
       "@lingfan-character/example-portrait": ["examples/portrait/src/index.ts"],
       "@lingfan-character/example-bust3d": ["examples/bust3d/src/index.ts"],
+      "@lingfan-character/example-layered": ["examples/layered/src/index.ts"],
       "@lingfan-character/renderer-canvas2d": ["renderers/canvas2d/src/index.ts"],
       "@lingfan-character/renderer-soft-raster": ["renderers/soft-raster/src/index.ts"]
     }

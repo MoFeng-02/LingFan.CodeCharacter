@@ -1,5 +1,5 @@
 /**
- * 模式切换与纹理注册：三种配方共用同一求值循环，切换只改配方、
+ * 模式切换与纹理注册：四种配方共用同一求值循环，切换只改配方、
  * 采样分支与面板可见性。纹理注册表住组合根——纹理是宿主资源，
  * 不进状态向量；网格形变仍是纯函数（tests 已验收）。
  */
@@ -11,13 +11,15 @@ import {
   TEXTURE_ID as PORTRAIT_TEXTURE,
 } from "@lingfan-character/example-portrait";
 import { bust3dPack } from "@lingfan-character/example-bust3d";
+import { layeredPack } from "@lingfan-character/example-layered";
 import type { TextureResource } from "@lingfan-character/renderer-canvas2d";
 
-export type Mode = "humanoid" | "portrait" | "bust3d";
+export type Mode = "humanoid" | "portrait" | "bust3d" | "layered";
 
 const humanoidRuntime = createCharacterRuntime(humanoidPack);
 const portraitRuntime = createCharacterRuntime(portraitPack);
 const bust3dRuntime = createCharacterRuntime(bust3dPack);
+const layeredRuntime = createCharacterRuntime(layeredPack);
 
 let mode: Mode = "humanoid";
 
@@ -34,6 +36,9 @@ export function runtimeFor(target: Mode): ReturnType<typeof createCharacterRunti
   if (target === "bust3d") {
     return bust3dRuntime;
   }
+  if (target === "layered") {
+    return layeredRuntime;
+  }
   return humanoidRuntime;
 }
 
@@ -42,6 +47,21 @@ const textures = new Map<string, TextureResource>();
 /** 纹理解析器：交给渲染执行层的可选第三参。 */
 export function resolveTexture(id: string): TextureResource | undefined {
   return textures.get(id);
+}
+
+/** 登记一张宿主纹理：分层占位图与用户选图都经此入库。 */
+export function registerTexture(id: string, resource: TextureResource): void {
+  textures.set(id, resource);
+}
+
+/** 该纹理是否已登记：重复引导时跳过重绘。 */
+export function textureRegistered(id: string): boolean {
+  return textures.has(id);
+}
+
+/** 需要纹理解析的模式：素材轨配方产网格，执行层必须查资源表。 */
+export function needsTexture(target: Mode): boolean {
+  return target === "portrait" || target === "layered";
 }
 
 /** 程序占位立绘：未选择图片时的可视基线，离屏画布现场生成。 */
@@ -94,6 +114,9 @@ export function wireModes(): void {
     document
       .querySelector<HTMLElement>("#panel-bust3d")
       ?.classList.toggle("hidden", next !== "bust3d");
+    document
+      .querySelector<HTMLElement>("#panel-layered")
+      ?.classList.toggle("hidden", next !== "layered");
   }
 
   for (const button of modeButtons) {
@@ -111,7 +134,7 @@ export function wireModes(): void {
       if (!file) return;
       try {
         const bitmap = await createImageBitmap(file);
-        textures.set(PORTRAIT_TEXTURE, {
+        registerTexture(PORTRAIT_TEXTURE, {
           image: bitmap,
           width: bitmap.width,
           height: bitmap.height,

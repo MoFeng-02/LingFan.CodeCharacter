@@ -17,6 +17,9 @@ importers:
       '@lingfan-character/example-humanoid':
         specifier: workspace:*
         version: link:examples/humanoid
+      '@lingfan-character/example-layered':
+        specifier: workspace:*
+        version: link:examples/layered
       '@lingfan-character/example-portrait':
         specifier: workspace:*
         version: link:examples/portrait
@@ -65,6 +68,15 @@ importers:
         version: link:../../packages/primitives
 
   examples/humanoid:
+    dependencies:
+      '@lingfan-character/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@lingfan-character/primitives':
+        specifier: workspace:*
+        version: link:../../packages/primitives
+
+  examples/layered:
     dependencies:
       '@lingfan-character/contracts':
         specifier: workspace:*

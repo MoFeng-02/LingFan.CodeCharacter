@@ -12,6 +12,7 @@ import { wireExpressions } from "./expressions";
 import {
   currentMode,
   ensurePlaceholderTexture,
+  needsTexture,
   resolveTexture,
   runtimeFor,
   wireModes,
@@ -21,6 +22,7 @@ import {
   tickTransitions,
   wireControls,
 } from "./overrides";
+import { ensureLayeredTextures } from "./placeholderLayers";
 import { ctx, drawingTarget, stage, status } from "./stage";
 
 async function frame(now: number): Promise<void> {
@@ -40,7 +42,11 @@ async function frame(now: number): Promise<void> {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, stage.width, stage.height);
   const plan = buildDrawPlan(state, scale);
-  draw(drawingTarget, plan, mode === "portrait" ? resolveTexture : undefined);
+  draw(
+    drawingTarget,
+    plan,
+    needsTexture(mode) ? resolveTexture : undefined,
+  );
   if (status) {
     status.textContent = `t=${tMs}ms · 绘制指令 ${plan.commands.length} 条 · 嘴驱动=${mouthDriveSource()}`;
   }
@@ -55,6 +61,7 @@ export function boot(): void {
   wireAudio();
   wireModes();
   ensurePlaceholderTexture();
+  ensureLayeredTextures();
 
   // 首帧同步绘制：页面加载立即可见；后续帧由 requestAnimationFrame 驱动，
   // 后台标签页被节流时画面静置但不会全空。
