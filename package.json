@@ -30,6 +30,7 @@
     "@lingfan-character/example-humanoid": "workspace:*",
     "@lingfan-character/example-layered": "workspace:*",
     "@lingfan-character/example-portrait": "workspace:*",
+    "@lingfan-character/example-rigged-portrait": "workspace:*",
     "@lingfan-character/kernel": "workspace:*",
     "@lingfan-character/primitives": "workspace:*",
     "@lingfan-character/renderer-canvas2d": "workspace:*",

@@ -69,7 +69,8 @@
       }
       #panel-portrait,
       #panel-bust3d,
-      #panel-layered {
+      #panel-layered,
+      #panel-rigged {
         display: flex;
         flex-wrap: wrap;
         gap: 12px 28px;
@@ -81,14 +82,16 @@
       }
       #panel-portrait label,
       #panel-bust3d label,
-      #panel-layered label {
+      #panel-layered label,
+      #panel-rigged label {
         display: flex;
         align-items: center;
         gap: 8px;
       }
       #panel-portrait input[type="range"],
       #panel-bust3d input[type="range"],
-      #panel-layered input[type="range"] {
+      #panel-layered input[type="range"],
+      #panel-rigged input[type="range"] {
         width: 110px;
       }
     </style>
@@ -100,6 +103,7 @@
         <button type="button" data-mode="portrait">素材立绘</button>
         <button type="button" data-mode="bust3d">立体半身</button>
         <button type="button" data-mode="layered">分层立绘</button>
+        <button type="button" data-mode="rigged">单图蒙皮</button>
       </section>
       <canvas id="stage" width="512" height="512"></canvas>
       <section id="panel">
@@ -233,6 +237,28 @@
         <label>风
           <input type="range" min="0" max="1" step="0.01" value="0"
                  data-param="layered.params.wind" />
+        </label>
+      </section>
+      <section id="panel-rigged" class="hidden">
+        <label>转头
+          <input type="range" min="-1" max="1" step="0.01" value="0"
+                 data-param="rigged.params.head-turn" />
+        </label>
+        <label>眨眼
+          <input type="range" min="0" max="1" step="0.01" value="0"
+                 data-param="rigged.params.blink" />
+        </label>
+        <label>张嘴
+          <input type="range" min="0" max="1" step="0.01" value="0"
+                 data-param="rigged.params.mouth-open" />
+        </label>
+        <label>呼吸
+          <input type="range" min="0" max="1" step="0.01" value="0.45"
+                 data-param="rigged.params.breathe" />
+        </label>
+        <label>风
+          <input type="range" min="0" max="1" step="0.01" value="0.12"
+                 data-param="rigged.params.wind" />
         </label>
       </section>
     </main>

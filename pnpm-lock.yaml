@@ -23,6 +23,9 @@ importers:
       '@lingfan-character/example-portrait':
         specifier: workspace:*
         version: link:examples/portrait
+      '@lingfan-character/example-rigged-portrait':
+        specifier: workspace:*
+        version: link:examples/rigged-portrait
       '@lingfan-character/kernel':
         specifier: workspace:*
         version: link:packages/kernel
@@ -86,6 +89,15 @@ importers:
         version: link:../../packages/primitives
 
   examples/portrait:
+    dependencies:
+      '@lingfan-character/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@lingfan-character/primitives':
+        specifier: workspace:*
+        version: link:../../packages/primitives
+
+  examples/rigged-portrait:
     dependencies:
       '@lingfan-character/contracts':
         specifier: workspace:*

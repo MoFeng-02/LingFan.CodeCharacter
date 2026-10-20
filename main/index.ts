@@ -23,6 +23,8 @@ import {
   wireControls,
 } from "./overrides";
 import { ensureLayeredTextures } from "./placeholderLayers";
+import { createRiggedTexture, RIGGED_TEXTURE_ID } from "./placeholderRigged";
+import { registerTexture, textureRegistered } from "./modes";
 import { ctx, drawingTarget, stage, status } from "./stage";
 
 async function frame(now: number): Promise<void> {
@@ -54,6 +56,12 @@ async function frame(now: number): Promise<void> {
   requestAnimationFrame(frame);
 }
 
+/** 单图蒙皮的占位立绘：只在首次引导时绘制一次。 */
+function ensureRiggedTexture(): void {
+  if (textureRegistered(RIGGED_TEXTURE_ID)) return;
+  registerTexture(RIGGED_TEXTURE_ID, createRiggedTexture());
+}
+
 /** 组合根引导：接好全部面板与驱动源，首帧同步绘制后进入帧循环。 */
 export function boot(): void {
   wireControls();
@@ -62,6 +70,7 @@ export function boot(): void {
   wireModes();
   ensurePlaceholderTexture();
   ensureLayeredTextures();
+  ensureRiggedTexture();
 
   // 首帧同步绘制：页面加载立即可见；后续帧由 requestAnimationFrame 驱动，
   // 后台标签页被节流时画面静置但不会全空。

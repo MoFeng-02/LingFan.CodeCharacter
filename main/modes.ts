@@ -12,14 +12,16 @@ import {
 } from "@lingfan-character/example-portrait";
 import { bust3dPack } from "@lingfan-character/example-bust3d";
 import { layeredPack } from "@lingfan-character/example-layered";
+import { riggedPortraitPack } from "@lingfan-character/example-rigged-portrait";
 import type { TextureResource } from "@lingfan-character/renderer-canvas2d";
 
-export type Mode = "humanoid" | "portrait" | "bust3d" | "layered";
+export type Mode = "humanoid" | "portrait" | "bust3d" | "layered" | "rigged";
 
 const humanoidRuntime = createCharacterRuntime(humanoidPack);
 const portraitRuntime = createCharacterRuntime(portraitPack);
 const bust3dRuntime = createCharacterRuntime(bust3dPack);
 const layeredRuntime = createCharacterRuntime(layeredPack);
+const riggedRuntime = createCharacterRuntime(riggedPortraitPack);
 
 let mode: Mode = "humanoid";
 
@@ -38,6 +40,9 @@ export function runtimeFor(target: Mode): ReturnType<typeof createCharacterRunti
   }
   if (target === "layered") {
     return layeredRuntime;
+  }
+  if (target === "rigged") {
+    return riggedRuntime;
   }
   return humanoidRuntime;
 }
@@ -61,7 +66,7 @@ export function textureRegistered(id: string): boolean {
 
 /** 需要纹理解析的模式：素材轨配方产网格，执行层必须查资源表。 */
 export function needsTexture(target: Mode): boolean {
-  return target === "portrait" || target === "layered";
+  return target === "portrait" || target === "layered" || target === "rigged";
 }
 
 /** 程序占位立绘：未选择图片时的可视基线，离屏画布现场生成。 */
@@ -117,6 +122,9 @@ export function wireModes(): void {
     document
       .querySelector<HTMLElement>("#panel-layered")
       ?.classList.toggle("hidden", next !== "layered");
+    document
+      .querySelector<HTMLElement>("#panel-rigged")
+      ?.classList.toggle("hidden", next !== "rigged");
   }
 
   for (const button of modeButtons) {
