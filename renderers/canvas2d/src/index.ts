@@ -13,7 +13,12 @@ export {
   type CompiledPathCommand,
   type CompiledShape,
 } from "./commands.js";
-export { draw, type DrawingContext } from "./draw.js";
+export {
+  draw,
+  type DrawingContext,
+  type TextureResource,
+  type TextureResolver,
+} from "./draw.js";
 export {
   applyToPoint,
   compose,

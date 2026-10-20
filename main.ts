@@ -20,9 +20,14 @@ import {
 } from "@lingfan-character/example-humanoid";
 import { createSpeechEnvelope } from "@lingfan-character/example-humanoid/demo";
 import {
+  portraitPack,
+  TEXTURE_ID as PORTRAIT_TEXTURE,
+} from "@lingfan-character/example-portrait";
+import {
   buildDrawPlan,
   draw,
   type DrawingContext,
+  type TextureResource,
 } from "@lingfan-character/renderer-canvas2d";
 import {
   isTransitionDone,
@@ -72,6 +77,13 @@ const drawingTarget: DrawingContext = {
   ellipse: (x, y, radiusX, radiusY, rotation, startAngle, endAngle) =>
     ctx.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle),
   fill: () => ctx.fill(),
+  clip: () => ctx.clip(),
+  save: () => ctx.save(),
+  restore: () => ctx.restore(),
+  transform: (a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f),
+  rect: (x, y, width, height) => ctx.rect(x, y, width, height),
+  drawImage: (image, sx, sy, sw, sh, dx, dy, dw, dh) =>
+    ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh),
 };
 
 const runtime = createCharacterRuntime(humanoidPack);
@@ -131,9 +143,9 @@ function triggerPulse(): void {
   overrides[SLOT.swingPulseMs] = PULSE_MS;
 }
 
-/** 输入槽挂滑杆：手动拖动即时生效并压制该槽的过渡锚点。 */
+/** 输入槽挂滑杆（两套面板通用）：手动拖动即时生效并压制过渡锚点。 */
 function wireControls(): void {
-  const inputs = document.querySelectorAll<HTMLInputElement>("#panel input");
+  const inputs = document.querySelectorAll<HTMLInputElement>("[data-param]");
   for (const input of inputs) {
     const slot = input.dataset.param as SlotName | undefined;
     if (!slot) continue;
@@ -288,6 +300,91 @@ speakButton?.addEventListener("click", () => {
   setSpeaking(!speaking);
 });
 
+/**
+ * 模式切换与纹理注册：程序角色与素材立绘共用同一求值循环，
+ * 切换只改配方与面板可见性。纹理注册表住组合根——纹理是宿主
+ * 资源，不进状态向量；网格形变仍是纯函数（tests 已验收）。
+ */
+type Mode = "humanoid" | "portrait";
+let mode: Mode = "humanoid";
+const portraitRuntime = createCharacterRuntime(portraitPack);
+const textures = new Map<string, TextureResource>();
+
+function resolveTexture(id: string): TextureResource | undefined {
+  return textures.get(id);
+}
+
+/** 程序占位立绘：未选择图片时的可视基线，离屏画布现场生成。 */
+function ensurePlaceholderTexture(): void {
+  if (textures.has(PORTRAIT_TEXTURE)) return;
+  const offscreen = document.createElement("canvas");
+  offscreen.width = 512;
+  offscreen.height = 512;
+  const pen = offscreen.getContext("2d");
+  if (!pen) return;
+  const base = pen.createLinearGradient(0, 0, 0, 512);
+  base.addColorStop(0, "#20262e");
+  base.addColorStop(1, "#2c343e");
+  pen.fillStyle = base;
+  pen.fillRect(0, 0, 512, 512);
+  pen.fillStyle = "#d9c4a5";
+  pen.beginPath();
+  pen.ellipse(256, 240, 96, 128, 0, 0, Math.PI * 2);
+  pen.fill();
+  pen.fillStyle = "#8fa3b8";
+  pen.beginPath();
+  pen.ellipse(256, 430, 150, 110, 0, 0, Math.PI * 2);
+  pen.fill();
+  pen.fillStyle = "#aab6c2";
+  pen.font = "16px sans-serif";
+  pen.textAlign = "center";
+  pen.fillText("程序占位立绘 · 请选择图片", 256, 496);
+  textures.set(PORTRAIT_TEXTURE, { image: offscreen, width: 512, height: 512 });
+}
+
+const modeButtons = document.querySelectorAll<HTMLButtonElement>("#modes button");
+const humanoidSections = [
+  document.querySelector<HTMLElement>("#panel"),
+  document.querySelector<HTMLElement>("#expressions"),
+];
+
+function setMode(next: Mode): void {
+  mode = next;
+  const portraitOn = next === "portrait";
+  for (const button of modeButtons) {
+    button.classList.toggle("active", button.dataset.mode === next);
+  }
+  for (const section of humanoidSections) {
+    section?.classList.toggle("hidden", portraitOn);
+  }
+  document
+    .querySelector<HTMLElement>("#panel-portrait")
+    ?.classList.toggle("hidden", !portraitOn);
+}
+
+for (const button of modeButtons) {
+  button.addEventListener("click", () => {
+    const next = button.dataset.mode as Mode | undefined;
+    if (next) setMode(next);
+  });
+}
+
+const portraitFile = document.querySelector<HTMLInputElement>("#portrait-file");
+portraitFile?.addEventListener("change", async () => {
+  const file = portraitFile.files?.[0];
+  if (!file) return;
+  try {
+    const bitmap = await createImageBitmap(file);
+    textures.set(PORTRAIT_TEXTURE, {
+      image: bitmap,
+      width: bitmap.width,
+      height: bitmap.height,
+    });
+  } catch (error) {
+    console.error("立绘解码失败", error);
+  }
+});
+
 async function frame(now: number): Promise<void> {
   if (epoch === null) {
     epoch = now;
@@ -302,13 +399,16 @@ async function frame(now: number): Promise<void> {
   } else {
     delete overrides[SLOT.mouthDrive];
   }
-  const state = await runtime.computeAt(tMs, overrides);
+  const state = await (mode === "portrait" ? portraitRuntime : runtime).computeAt(
+    tMs,
+    overrides,
+  );
   const scale = Math.min(stage.width, stage.height);
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, stage.width, stage.height);
   const plan = buildDrawPlan(state, scale);
-  draw(drawingTarget, plan);
+  draw(drawingTarget, plan, mode === "portrait" ? resolveTexture : undefined);
   if (status) {
     const source = audioDrive !== null ? "音频" : speaking ? "合成" : "无";
     status.textContent = `t=${tMs}ms · 绘制指令 ${plan.commands.length} 条 · 嘴驱动=${source}`;
@@ -319,6 +419,7 @@ async function frame(now: number): Promise<void> {
 
 wireControls();
 wireExpressions();
+ensurePlaceholderTexture();
 
 // 首帧同步绘制：页面加载立即可见；后续帧由 requestAnimationFrame 驱动，
 // 后台标签页被节流时画面静置但不会全空。

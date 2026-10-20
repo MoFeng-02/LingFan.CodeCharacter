@@ -14,6 +14,9 @@ importers:
       '@lingfan-character/example-humanoid':
         specifier: workspace:*
         version: link:examples/humanoid
+      '@lingfan-character/example-portrait':
+        specifier: workspace:*
+        version: link:examples/portrait
       '@lingfan-character/kernel':
         specifier: workspace:*
         version: link:packages/kernel
@@ -47,6 +50,15 @@ importers:
         version: 2.1.1(supports-color@7.2.0)
 
   examples/humanoid:
+    dependencies:
+      '@lingfan-character/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@lingfan-character/primitives':
+        specifier: workspace:*
+        version: link:../../packages/primitives
+
+  examples/portrait:
     dependencies:
       '@lingfan-character/contracts':
         specifier: workspace:*

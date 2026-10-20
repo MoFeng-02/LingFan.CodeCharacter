@@ -49,7 +49,8 @@
         flex-wrap: wrap;
         justify-content: center;
       }
-      #expressions button {
+      #expressions button,
+      #modes button {
         font-size: 13px;
         padding: 4px 14px;
         border-radius: 8px;
@@ -58,14 +59,40 @@
         color: #d8dee6;
         cursor: pointer;
       }
-      #expressions button.active {
+      #expressions button.active,
+      #modes button.active {
         border-color: #5b8fd9;
         color: #ffffff;
+      }
+      .hidden {
+        display: none !important;
+      }
+      #panel-portrait {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 28px;
+        max-width: 640px;
+        padding: 12px 20px;
+        border: 1px solid #2a323c;
+        border-radius: 12px;
+        font-size: 13px;
+      }
+      #panel-portrait label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      #panel-portrait input[type="range"] {
+        width: 110px;
       }
     </style>
   </head>
   <body>
     <main style="display: contents">
+      <section id="modes">
+        <button type="button" data-mode="humanoid" class="active">程序角色</button>
+        <button type="button" data-mode="portrait">素材立绘</button>
+      </section>
       <canvas id="stage" width="512" height="512"></canvas>
       <section id="panel">
         <label>转头
@@ -129,6 +156,28 @@
         <button type="button" data-expression="皱眉">皱眉</button>
         <button type="button" data-expression="单挑眉">单挑眉</button>
         <button type="button" class="reset">复位表情</button>
+      </section>
+      <section id="panel-portrait" class="hidden">
+        <label>呼吸
+          <input type="range" min="0" max="1" step="0.01" value="0.4"
+                 data-param="portrait.params.breathe" />
+        </label>
+        <label>眨眼
+          <input type="range" min="0" max="1" step="0.01" value="0"
+                 data-param="portrait.params.blink" />
+        </label>
+        <label>口型
+          <input type="range" min="0" max="1" step="0.01" value="0"
+                 data-param="portrait.params.mouth-open" />
+        </label>
+        <label>朝向
+          <input type="range" min="-1" max="1" step="0.01" value="0"
+                 data-param="portrait.params.head-turn" />
+        </label>
+        <label style="font-size: 12px; color: #8a94a3;">立绘图片
+          <input type="file" id="portrait-file" accept="image/*"
+                 style="font-size: 12px; max-width: 160px;" />
+        </label>
       </section>
     </main>
     <output id="status" aria-live="polite"></output>

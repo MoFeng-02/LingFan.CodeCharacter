@@ -67,6 +67,31 @@ export type PathCommand =
   | { readonly kind: "closePath" };
 
 /**
+ * 纹理标识：素材位图在宿主资源表中的引用键。
+ * 契约只携带标识与网格几何，位图本体不进状态向量——
+ * 资源的解析与注册属于宿主与渲染端的装配语义，不属于 state(t)。
+ */
+export type TextureId = string;
+
+/**
+ * 网格形变基元：素材轨的承接面（程序管动、素材管画）。
+ * cols×rows 个控制点构成 (cols−1)×(rows−1) 个四边形网格单元，行优先排列；
+ * 顶点为图层局部归一化坐标，由基系数与曲线驱动形变——纯函数可求值可指纹。
+ * 渲染端按 textureId 从宿主资源表解析位图，将纹理逐单元映射到形变网格；
+ * 解析失败的语义由渲染端声明（canvas2d 适配器选择报错而非静默跳过）。
+ */
+export interface MeshPrimitive {
+  readonly kind: "mesh";
+  /** 网格列数与行数（控制点数），均 ≥ 2。 */
+  readonly cols: number;
+  readonly rows: number;
+  /** 形变后控制点，行优先，长度 = cols×rows。 */
+  readonly vertices: readonly NormalizedPoint[];
+  /** 素材位图在宿主资源表中的引用键。 */
+  readonly textureId: TextureId;
+}
+
+/**
  * 程序形状基元：外观节点的像素来源描述，分辨率无关。
  * v0 提供路径与椭圆；新增基元属于契约增补，只增不改。
  */
@@ -77,7 +102,8 @@ export type ShapePrimitive =
       readonly center: NormalizedPoint;
       readonly radiusX: number;
       readonly radiusY: number;
-    };
+    }
+  | MeshPrimitive;
 
 /**
  * 可渲染基元：形状、形变与外观参数的合体，进 state(t)。

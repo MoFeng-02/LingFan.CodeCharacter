@@ -14,6 +14,7 @@ export type {
   CharacterState,
   ConstraintReport,
   CoordinateSpaceId,
+  MeshPrimitive,
   NodeId,
   NodeState,
   NormalizedPoint,
@@ -22,6 +23,7 @@ export type {
   RgbaColor,
   ShapePrimitive,
   SlotName,
+  TextureId,
   TimeMs,
 } from "./state";
 

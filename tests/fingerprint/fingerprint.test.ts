@@ -61,6 +61,41 @@ class RecordingContext implements DrawingContext {
       `fill ${this.globalCompositeOperation} ${this.globalAlpha} ${this.fillStyle}`,
     );
   }
+  clip(): void {
+    this.ops.push("clip");
+  }
+  save(): void {
+    this.ops.push("save");
+  }
+  restore(): void {
+    this.ops.push("restore");
+  }
+  transform(
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+  ): void {
+    this.ops.push(`transform ${a} ${b} ${c} ${d} ${e} ${f}`);
+  }
+  rect(x: number, y: number, width: number, height: number): void {
+    this.ops.push(`rect ${x} ${y} ${width} ${height}`);
+  }
+  drawImage(
+    _image: CanvasImageSource,
+    sx: number,
+    sy: number,
+    sw: number,
+    sh: number,
+    dx: number,
+    dy: number,
+    dw: number,
+    dh: number,
+  ): void {
+    this.ops.push(`drawImage ${sx} ${sy} ${sw} ${sh} ${dx} ${dy} ${dw} ${dh}`);
+  }
 }
 
 const SCALE = 400;

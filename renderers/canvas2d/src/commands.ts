@@ -36,7 +36,7 @@ export type CompiledPathCommand =
     }
   | { readonly kind: "closePath" };
 
-/** 编译后形状：路径或椭圆，坐标均为归一化域。 */
+/** 编译后形状：路径、椭圆或网格，坐标均为归一化域。 */
 export type CompiledShape =
   | { readonly kind: "path"; readonly commands: readonly CompiledPathCommand[] }
   | {
@@ -45,6 +45,14 @@ export type CompiledShape =
       readonly cy: number;
       readonly rx: number;
       readonly ry: number;
+    }
+  | {
+      readonly kind: "mesh";
+      readonly cols: number;
+      readonly rows: number;
+      /** 形变后控制点，行优先 [x, y] 元组，长度 = cols×rows。 */
+      readonly vertices: readonly (readonly [number, number])[];
+      readonly textureId: string;
     };
 
 /** 单条填充指令：绘制执行器逐条照抄到 canvas2d，不再做任何运算。 */
@@ -98,7 +106,7 @@ function toCompiledCommand(command: PathCommand): CompiledPathCommand {
   }
 }
 
-/** 编译形状：路径与椭圆的坐标保持归一化，缩放由 transform 矩阵统一承担。 */
+/** 编译形状：路径、椭圆与网格的坐标保持归一化，缩放由 transform 矩阵统一承担。 */
 function toCompiledShape(shape: ShapePrimitive): CompiledShape {
   if (shape.kind === "ellipse") {
     return {
@@ -107,6 +115,15 @@ function toCompiledShape(shape: ShapePrimitive): CompiledShape {
       cy: shape.center.y,
       rx: shape.radiusX,
       ry: shape.radiusY,
+    };
+  }
+  if (shape.kind === "mesh") {
+    return {
+      kind: "mesh",
+      cols: shape.cols,
+      rows: shape.rows,
+      vertices: shape.vertices.map((point) => [point.x, point.y] as const),
+      textureId: shape.textureId,
     };
   }
   return {
