@@ -17,3 +17,13 @@ export {
 } from "./chain";
 export { createSubstream, deriveSeed } from "./random";
 export { evaluateNoise } from "./noise";
+export { polyCos, polySin } from "./angle";
+export {
+  multiplyMat4,
+  rotationX,
+  rotationY,
+  rotationZ,
+  transformPoint,
+  viewMatrix,
+  type Mat4,
+} from "./matrix3";

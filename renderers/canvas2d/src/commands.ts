@@ -126,6 +126,11 @@ function toCompiledShape(shape: ShapePrimitive): CompiledShape {
       textureId: shape.textureId,
     };
   }
+  if (shape.kind === "solid3d") {
+    throw new Error(
+      "canvas2d 渲染器无法执行立体几何基元，请改用 3D 采样渲染器",
+    );
+  }
   return {
     kind: "path",
     commands: shape.commands.map(toCompiledCommand),

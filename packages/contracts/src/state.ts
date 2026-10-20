@@ -73,6 +73,8 @@ export type PathCommand =
  */
 export type TextureId = string;
 
+import type { SolidPrimitive } from "./geometry";
+
 /**
  * 网格形变基元：素材轨的承接面（程序管动、素材管画）。
  * cols×rows 个控制点构成 (cols−1)×(rows−1) 个四边形网格单元，行优先排列；
@@ -103,7 +105,8 @@ export type ShapePrimitive =
       readonly radiusX: number;
       readonly radiusY: number;
     }
-  | MeshPrimitive;
+  | MeshPrimitive
+  | SolidPrimitive;
 
 /**
  * 可渲染基元：形状、形变与外观参数的合体，进 state(t)。

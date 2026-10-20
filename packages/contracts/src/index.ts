@@ -74,3 +74,5 @@ export type {
   OutboundDeclaration,
   SceneLink,
 } from "./link";
+
+export type { Face3, SolidPrimitive, Vec3, ViewAngle } from "./geometry";
