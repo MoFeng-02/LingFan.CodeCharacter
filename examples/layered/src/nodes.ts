@@ -80,6 +80,7 @@ function createLayerNode(spec: LayerSpec): NodeDeclaration {
         {
           breathScale: read(FIELD_SLOT.breathScale),
           turnShift: read(FIELD_SLOT.turnShift),
+          headTurn: read(SLOT.headTurn),
         },
         local,
       );

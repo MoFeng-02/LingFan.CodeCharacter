@@ -40,8 +40,13 @@ export {
   type SlotKey,
 } from "./shared";
 export {
+  DEPTH_SCALE_GAIN,
+  INTRA_PARALLAX_GAIN,
+  PROFILE_PIVOT,
   applyShared,
   deformLayer,
+  depthProfile,
+  depthScale,
   localDisplacement,
   parallaxShift,
   resolveShared,

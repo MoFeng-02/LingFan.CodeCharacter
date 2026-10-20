@@ -1,10 +1,13 @@
 /**
  * 共享形变场：所有层共同调用的同一套位移规则。
  *
- * 是什么：呼吸均匀缩放 + 朝向整体平移，输出与「层」无关的位移分量。
+ * 是什么：呼吸均匀缩放 + 朝向整体平移 + 层内深度视差与深度缩放，输出与
+ *         「层」无关的位移分量。
  * 为什么：层间撕裂的根源是各层各自算位移——同一点在不同层得到不同结果，
  *         接缝就裂开。把共享位移收敛成「只由坐标与参数决定」的函数，
  *         任何层在同一坐标必然得到逐字节相同的位移，撕裂在数学上不可能发生。
+ *         层内深度项也放在这里：它只依赖坐标，因此同样满足层无关性，却能
+ *         让一整张薄片内部读出连续体积，而不是整层刚体平移。
  * 怎么用：deformLayer 先对静止点调用本函数取共享分量，再叠加层局部分量。
  * 注意事项：本函数不接受层信息（无层标识、无深度、无密度）——任何层相关
  *          的量都必须留在局部场；缩放原点固定在颈根部，保证呼吸是起伏
@@ -14,6 +17,12 @@
 
 import type { NormalizedPoint } from "@lingfan-character/contracts";
 import { BREATH_GAIN, BREATH_ORIGIN, TURN_SHIFT_GAIN } from "../shared";
+import {
+  INTRA_PARALLAX_GAIN,
+  PROFILE_PIVOT,
+  depthProfile,
+  depthScale,
+} from "./depth";
 
 /** 共享场原始输入：配方节点的输入参数。 */
 export interface SharedInput {
@@ -31,6 +40,8 @@ export interface SharedParams {
   readonly breathScale: number;
   /** 朝向整体平移量（归一化横坐标增量）。 */
   readonly turnShift: number;
+  /** 朝向 -1..1：层内深度视差与深度缩放都要用到。 */
+  readonly headTurn: number;
 }
 
 /** 原始输入换算成共享场参数：全仓唯一换算点。 */
@@ -38,17 +49,28 @@ export function resolveShared(input: SharedInput): SharedParams {
   return {
     breathScale: 1 + BREATH_GAIN * input.breathPhase * input.breathe,
     turnShift: input.headTurn * TURN_SHIFT_GAIN,
+    headTurn: input.headTurn,
   };
 }
 
-/** 共享位移：绕颈根部均匀缩放的位移量 + 朝向整体平移。 */
+/** 共享位移：绕颈根部的缩放、朝向平移、层内深度视差与深度缩放。 */
 export function sharedDisplacement(
   point: NormalizedPoint,
   params: SharedParams,
 ): NormalizedPoint {
-  const growth = params.breathScale - 1;
+  // 层内深度视差：鼻尖朝向侧移动得多，轮廓边缘移动得少——一张薄片内部
+  // 因此产生连续起伏；只依赖坐标与朝向，任何层在同一点必然同值。
+  const depthX =
+    params.headTurn *
+    (depthProfile(point) - PROFILE_PIVOT) *
+    INTRA_PARALLAX_GAIN;
+
+  // 深度缩放：前侧略微放大、后侧略微缩小，读作近大远小而非整体推拉。
+  const scale = params.breathScale * depthScale(point, params.headTurn);
+  const growth = scale - 1;
+
   return {
-    x: (point.x - BREATH_ORIGIN.x) * growth + params.turnShift,
+    x: (point.x - BREATH_ORIGIN.x) * growth + params.turnShift + depthX,
     y: (point.y - BREATH_ORIGIN.y) * growth,
   };
 }

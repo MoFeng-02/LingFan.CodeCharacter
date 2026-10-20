@@ -15,5 +15,12 @@ export {
   type SharedInput,
   type SharedParams,
 } from "./shared";
+export {
+  DEPTH_SCALE_GAIN,
+  INTRA_PARALLAX_GAIN,
+  PROFILE_PIVOT,
+  depthProfile,
+  depthScale,
+} from "./depth";
 export { localDisplacement, parallaxShift, type LocalParams } from "./local";
 export { deformLayer } from "./deform";

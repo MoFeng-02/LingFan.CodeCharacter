@@ -9,8 +9,10 @@ import {
   SLOT,
   applyShared,
   deformLayer,
+  depthProfile,
   layeredPack,
   layerNodeId,
+  parallaxShift,
   resolveShared,
   restLayer,
   type LocalParams,
@@ -231,19 +233,78 @@ describe("分层素材轨 layered 配方", () => {
     expect(eyelidPrimitive?.opacity).toBe(1);
   });
 
-  it("转头视差有序：近层位移大于远层，同深度同位移", async () => {
+  it("转头视差有序：近层位移大于远层，镜像点同位移", async () => {
     const flat = await stateAt(100, { [SLOT.headTurn]: 0 });
     const turned = await stateAt(100, { [SLOT.headTurn]: 1 });
-    const shiftX = (layerId: string): number => {
-      const index = layerIndex(layerId);
-      const moved = meshOf(turned, index).vertices[0]!;
-      const still = meshOf(flat, index).vertices[0]!;
+    const shiftAt = (layerId: string, index: number): number => {
+      const layer = layerIndex(layerId);
+      const moved = meshOf(turned, layer).vertices[index]!;
+      const still = meshOf(flat, layer).vertices[index]!;
       return moved.x - still.x;
     };
+    const shiftX = (layerId: string): number => shiftAt(layerId, 0);
+
     expect(shiftX("hair-front")).toBeGreaterThan(shiftX("face"));
     expect(shiftX("face")).toBeGreaterThan(shiftX("hair-back"));
     expect(shiftX("hair-front")).toBeGreaterThan(0);
-    expect(shiftX("eye-white-l")).toBeCloseTo(shiftX("eye-white-r"), 12);
+
+    // 层深度决定视差：同深度层拿到同一份位移，越深的层位移越大。
+    // （注意不能拿左右眼的顶点位移互相比较——共享位移里含绕原点缩放的
+    //  (x−0.5) 项，镜像点的该项符号相反，位移本就不对称。）
+    const depthOf = (layerId: string): number =>
+      LAYER_SPECS[layerIndex(layerId)]!.depth;
+    expect(parallaxShift(depthOf("eye-white-l"), 1)).toBeCloseTo(
+      parallaxShift(depthOf("eye-white-r"), 1),
+      12,
+    );
+    expect(parallaxShift(depthOf("pupil-l"), 1)).toBeGreaterThan(
+      parallaxShift(depthOf("face"), 1),
+    );
+    expect(parallaxShift(depthOf("hair-back"), 1)).toBeLessThan(
+      parallaxShift(depthOf("face"), 1),
+    );
+  });
+
+  it("层内深度视差：同一张薄片内部位移不齐，中轴比轮廓移动更多", async () => {
+    const flat = await stateAt(100, { [SLOT.headTurn]: 0 });
+    const turned = await stateAt(100, { [SLOT.headTurn]: 1 });
+    const face = layerIndex("face");
+    const spec = LAYER_SPECS[face]!;
+    const shiftAt = (index: number): number => {
+      const moved = meshOf(turned, face).vertices[index]!;
+      const still = meshOf(flat, face).vertices[index]!;
+      return moved.x - still.x;
+    };
+
+    // 同一行内：靠近中轴的顶点比靠近边缘的顶点朝转向侧移动更多。
+    const middleCol = Math.floor((spec.cols - 1) / 2);
+    const middleRow = Math.floor((spec.rows - 1) / 2);
+    const center = shiftAt(middleRow * spec.cols + middleCol);
+    const leftEdge = shiftAt(middleRow * spec.cols);
+    const rightEdge = shiftAt(middleRow * spec.cols + spec.cols - 1);
+    expect(center).toBeGreaterThan(leftEdge);
+    expect(center).toBeGreaterThan(rightEdge);
+
+    // 层内起伏必须严格存在：若整层刚体平移，这三个位移会完全相等。
+    expect(Math.abs(center - leftEdge)).toBeGreaterThan(0.005);
+  });
+
+  it("深度剖面关于中轴对称，极点最深、边缘收敛", () => {
+    const near = depthProfile({ x: 0.5, y: 0.48 });
+    const left = depthProfile({ x: 0.34, y: 0.5 });
+    const right = depthProfile({ x: 0.66, y: 0.5 });
+    expect(near).toBeGreaterThan(0.9);
+    expect(left).toBeCloseTo(right, 12);
+
+    // 离极点越远越浅：沿横轴逐点递减，且始终落在 0..1。
+    let previous = near;
+    for (let step = 1; step <= 8; step += 1) {
+      const sample = depthProfile({ x: 0.5 + step * 0.06, y: 0.48 });
+      expect(sample).toBeLessThan(previous);
+      expect(sample).toBeGreaterThanOrEqual(0);
+      expect(sample).toBeLessThanOrEqual(1);
+      previous = sample;
+    }
   });
 
   it("同参数两遍求值编译，指纹逐字节一致", async () => {
