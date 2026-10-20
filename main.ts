@@ -115,7 +115,22 @@ function tickTransitions(tMs: number): void {
   }
 }
 
-/** 五个输入槽挂滑杆：手动拖动即时生效并压制该槽的过渡锚点。 */
+/**
+ * 弹簧扰动：转头与发摆滑杆的每次拖动都是一次扰动事件——组合根把
+ * 扰动锚点（时刻、幅度、时长）写进覆盖，链条节点据此解析回摆。
+ * 页面加载时滑杆初始化也会触发一次，作为开机的自然摆动。
+ */
+const PULSE_SLOTS: ReadonlySet<SlotName> = new Set<SlotName>([SLOT.turn, SLOT.swing]);
+const PULSE_AMPLITUDE = 0.4;
+const PULSE_MS = 420;
+
+function triggerPulse(): void {
+  overrides[SLOT.swingPulseAt] = nowTMs();
+  overrides[SLOT.swingPulseAmp] = PULSE_AMPLITUDE;
+  overrides[SLOT.swingPulseMs] = PULSE_MS;
+}
+
+/** 输入槽挂滑杆：手动拖动即时生效并压制该槽的过渡锚点。 */
 function wireControls(): void {
   const inputs = document.querySelectorAll<HTMLInputElement>("#panel input");
   for (const input of inputs) {
@@ -125,6 +140,9 @@ function wireControls(): void {
       const value = Number.parseFloat(input.value);
       transitions.delete(slot);
       overrides[slot] = Number.isFinite(value) ? value : 0;
+      if (PULSE_SLOTS.has(slot)) {
+        triggerPulse();
+      }
     };
     input.addEventListener("input", apply);
     apply();

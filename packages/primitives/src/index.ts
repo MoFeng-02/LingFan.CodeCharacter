@@ -9,5 +9,11 @@
  */
 
 export { applyEasing, evaluateCurve } from "./curve";
+export {
+  chainOffsets,
+  springResponse,
+  type ChainSpec,
+  type SpringPulse,
+} from "./chain";
 export { createSubstream, deriveSeed } from "./random";
 export { evaluateNoise } from "./noise";

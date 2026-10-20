@@ -12,6 +12,7 @@ export const SLOT = {
   breath: "humanoid.params.breath",
   swing: "humanoid.params.swing",
   mouthDrive: "humanoid.params.mouth-drive",
+  wind: "humanoid.params.wind",
 
   headTurn: "humanoid.motion.head-turn",
   smileWave: "humanoid.face.smile-wave",
@@ -19,6 +20,12 @@ export const SLOT = {
   breathWave: "humanoid.body.breath-wave",
   swingWave: "humanoid.hair.swing-wave",
   openWave: "humanoid.mouth.open-wave",
+
+  // 弹簧扰动锚点三槽：组合根在扰动发生时写入（-1 = 无扰动），
+  // 链条节点据此解析回摆，锚点表由组合根持有、角色域零状态。
+  swingPulseAt: "humanoid.motion.swing-pulse-at",
+  swingPulseAmp: "humanoid.motion.swing-pulse-amp",
+  swingPulseMs: "humanoid.motion.swing-pulse-ms",
 
   cheekLift: "humanoid.face.cheek-lift",
   eyeSqueeze: "humanoid.face.eye-squeeze",
@@ -85,6 +92,7 @@ export const DEFAULTS: Record<SlotId, number> = {
   [SLOT.breath]: 0.35,
   [SLOT.swing]: 0,
   [SLOT.mouthDrive]: 0,
+  [SLOT.wind]: 0,
 
   [SLOT.headTurn]: 0,
   [SLOT.smileWave]: 0.2,
@@ -92,6 +100,10 @@ export const DEFAULTS: Record<SlotId, number> = {
   [SLOT.breathWave]: 0.35,
   [SLOT.swingWave]: 0,
   [SLOT.openWave]: 0,
+
+  [SLOT.swingPulseAt]: -1,
+  [SLOT.swingPulseAmp]: 0,
+  [SLOT.swingPulseMs]: 420,
 
   [SLOT.cheekLift]: 0,
   [SLOT.eyeSqueeze]: 0,
@@ -125,6 +137,7 @@ export const RANGES: Partial<Record<SlotId, { min: number; max: number }>> = {
   [SLOT.breath]: { min: 0, max: 1 },
   [SLOT.swing]: { min: -1, max: 1 },
   [SLOT.mouthDrive]: { min: 0, max: 1 },
+  [SLOT.wind]: { min: 0, max: 1 },
 
   [SLOT.headTurn]: { min: -1, max: 1 },
   [SLOT.smileWave]: { min: 0, max: 1 },
@@ -132,6 +145,9 @@ export const RANGES: Partial<Record<SlotId, { min: number; max: number }>> = {
   [SLOT.breathWave]: { min: 0, max: 1 },
   [SLOT.swingWave]: { min: -1, max: 1 },
   [SLOT.openWave]: { min: 0, max: 1 },
+
+  // 弹簧锚点三槽不做取值钳制：时刻是毫秒量纲、时长与幅度由组合根
+  // 负责给合理值，链条数学只消费它们。
 
   [SLOT.cheekLift]: { min: 0, max: 1 },
   [SLOT.eyeSqueeze]: { min: 0, max: 1 },

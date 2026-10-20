@@ -63,6 +63,28 @@ export const humanoidPack: CharacterPack = {
       defaultValue: DEFAULTS[SLOT.mouthDrive],
       range: RANGES[SLOT.mouthDrive],
     },
+    {
+      name: SLOT.wind,
+      direction: "input",
+      defaultValue: DEFAULTS[SLOT.wind],
+      range: RANGES[SLOT.wind],
+    },
+    // 弹簧锚点三槽：时刻为毫秒量纲、时长与幅度由组合根负责，不设钳制范围。
+    {
+      name: SLOT.swingPulseAt,
+      direction: "input",
+      defaultValue: DEFAULTS[SLOT.swingPulseAt],
+    },
+    {
+      name: SLOT.swingPulseAmp,
+      direction: "input",
+      defaultValue: DEFAULTS[SLOT.swingPulseAmp],
+    },
+    {
+      name: SLOT.swingPulseMs,
+      direction: "input",
+      defaultValue: DEFAULTS[SLOT.swingPulseMs],
+    },
     { name: SLOT.headTurn, direction: "output", range: RANGES[SLOT.headTurn] },
     {
       name: SLOT.smileWave,

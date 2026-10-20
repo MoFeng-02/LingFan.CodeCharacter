@@ -43,9 +43,11 @@ describe("humanoid 域包", () => {
     for (const slot of humanoidPack.slots) {
       if (slot.direction !== "input") continue;
       expect(slot.defaultValue).toBeDefined();
-      expect(slot.range).toBeDefined();
-      expect(slot.defaultValue).toBeGreaterThanOrEqual(slot.range!.min);
-      expect(slot.defaultValue).toBeLessThanOrEqual(slot.range!.max);
+      // 锚点类槽（毫秒时刻等）可合法不设范围；声明了范围就必须容纳缺省值。
+      if (slot.range) {
+        expect(slot.defaultValue).toBeGreaterThanOrEqual(slot.range.min);
+        expect(slot.defaultValue).toBeLessThanOrEqual(slot.range.max);
+      }
     }
   });
 
@@ -350,5 +352,43 @@ describe("humanoid 域包", () => {
     expect(reports.length).toBeGreaterThan(0);
     expect(reports.every((report) => report.clamped)).toBe(true);
     expect(reports.every((report) => report.applied <= 1)).toBe(true);
+  });
+
+  it("受控链条：发梢延迟跟随扰动、窗外收敛回静置", async () => {
+    const runtime = createCharacterRuntime(humanoidPack);
+    const pulseOverrides = {
+      [SLOT.swingPulseAt]: 1000,
+      [SLOT.swingPulseAmp]: 1,
+      [SLOT.swingPulseMs]: 420,
+    };
+    const strandE = async (t: number): Promise<number> =>
+      (await runtime.computeAt(t, pulseOverrides)).nodes[NODE_ID.hairFront]!
+        .primitives[1]!.transform.e;
+    const stillE = (await runtime.computeAt(1005, { [SLOT.swingPulseAt]: -1 }))
+      .nodes[NODE_ID.hairFront]!.primitives[1]!.transform.e;
+    // 扰动后 5ms：链条末段尚未被触发（段间延迟 70ms），发梢仍在静置位。
+    expect(await strandE(1005)).toBe(stillE);
+    // 扰动后 100ms：末段已被触发，发梢离开静置位。
+    expect(await strandE(1100)).not.toBe(stillE);
+    // 窗外固化：弹簧收敛回稳态，发帘与发梢全部基元与静置逐字节一致。
+    const settled = await runtime.computeAt(2000, pulseOverrides);
+    const still = await runtime.computeAt(2000, { [SLOT.swingPulseAt]: -1 });
+    expect(JSON.stringify(settled.nodes[NODE_ID.hairFront]!.primitives)).toBe(
+      JSON.stringify(still.nodes[NODE_ID.hairFront]!.primitives),
+    );
+  });
+
+  it("受控链条：耳坠挂点与坠体入饰品层，风场改变发梢位置", async () => {
+    const runtime = createCharacterRuntime(humanoidPack);
+    const accessories = (await runtime.computeAt(0)).nodes[NODE_ID.accessory]!
+      .primitives;
+    // 两侧发卡 + 每侧耳钉与坠体 = 6 件。
+    expect(accessories.length).toBe(6);
+    const strandE = async (
+      overrides: Record<string, number>,
+    ): Promise<number> =>
+      (await runtime.computeAt(3000, overrides)).nodes[NODE_ID.hairFront]!
+        .primitives[1]!.transform.e;
+    expect(await strandE({ [SLOT.wind]: 1 })).not.toBe(await strandE({}));
   });
 });
