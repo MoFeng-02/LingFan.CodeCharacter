@@ -6,11 +6,14 @@ import {
   humanoidPack,
 } from "@lingfan-character/example-humanoid";
 import {
+  applyToPoint,
   buildDrawPlan,
   draw,
   fingerprint,
+  scaleTransform,
   type DrawPlan,
   type DrawingContext,
+  type ViewSize,
 } from "@lingfan-character/renderer-canvas2d";
 import { describe, expect, it } from "vitest";
 
@@ -234,5 +237,54 @@ describe("canvas2d 渲染器", () => {
         `fill ${command.composite} ${command.opacity} ${command.fillStyle}`,
       );
     });
+  });
+
+  it("分轴画幅与等比缩放口径一致：数字入参仍是等比矩阵", () => {
+    // 历史口径零变化：传数字时 x、y 同倍率，指纹与单标量缩放逐字节相同。
+    expect(scaleTransform(SCALE)).toEqual({
+      a: SCALE,
+      b: 0,
+      c: 0,
+      d: SCALE,
+      e: 0,
+      f: 0,
+    });
+    expect(scaleTransform(SCALE)).toEqual(
+      scaleTransform({ width: SCALE, height: SCALE }),
+    );
+  });
+
+  it("分轴画幅把归一化角点送到画布对角（竖图不再被拉成方的）", () => {
+    const view: ViewSize = { width: 337, height: 512 };
+    const matrix = scaleTransform(view);
+    // 归一化域的两个角点必须精确落到画布的两端，中间不留白也不溢出。
+    expect(applyToPoint(matrix, { x: 0, y: 0 })).toEqual({ x: 0, y: 0 });
+    expect(applyToPoint(matrix, { x: 1, y: 1 })).toEqual({ x: 337, y: 512 });
+  });
+
+  it("画幅入参进入指令矩阵且形状坐标保持归一化", async () => {
+    const runtime = createCharacterRuntime(humanoidPack);
+    const state: CharacterState = await runtime.computeAt(0);
+    const view: ViewSize = { width: 337, height: 512 };
+    const plan = buildDrawPlan(state, view);
+    const uniform = buildDrawPlan(state, SCALE);
+    const first = plan.commands[0]!;
+    const base = uniform.commands[0]!;
+    // 画幅只改缩放矩阵：横纵系数按画幅与等比值的比例变化。
+    expect(first.transform[0]).toBeCloseTo(
+      (base.transform[0]! * view.width) / SCALE,
+      12,
+    );
+    expect(first.transform[3]).toBeCloseTo(
+      (base.transform[3]! * view.height) / SCALE,
+      12,
+    );
+    // 竖画幅的横纵比例即画幅比例：这正是「不再被拉成方的」的量化表述。
+    expect(first.transform[0]! / first.transform[3]!).toBeCloseTo(
+      view.width / view.height,
+      12,
+    );
+    // 形状仍按归一化声明：换画幅只改矩阵，不改形状。
+    expect(first.shape).toEqual(base.shape);
   });
 });

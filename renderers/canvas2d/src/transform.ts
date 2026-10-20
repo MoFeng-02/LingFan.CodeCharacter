@@ -16,9 +16,25 @@ import type {
 /** 恒等变换：任何合成链的起点。 */
 export const IDENTITY: AffineTransform = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
 
-/** 等比缩放矩阵：归一化坐标到画布像素的唯一入口。 */
-export function scaleTransform(scale: number): AffineTransform {
-  return { a: scale, b: 0, c: 0, d: scale, e: 0, f: 0 };
+/** 画幅像素尺寸：归一化坐标到画布的分轴比例来源。 */
+export interface ViewSize {
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * 归一化坐标到画布像素的缩放矩阵。
+ *
+ * 传数字时按等比缩放：x、y 同倍率，适用于方画布，指令指纹与
+ * 缩放只作用一次的单标量口径逐字节相同。
+ * 传 ViewSize 时按轴缩放——归一化方域铺满非方形画幅，
+ * 非方形素材因此不再被拉成方形，这是素材宽高比保真的唯一入口。
+ */
+export function scaleTransform(view: number | ViewSize): AffineTransform {
+  if (typeof view === "number") {
+    return { a: view, b: 0, c: 0, d: view, e: 0, f: 0 };
+  }
+  return { a: view.width, b: 0, c: 0, d: view.height, e: 0, f: 0 };
 }
 
 /** 合成两个变换：先应用 inner，再应用 outer。 */

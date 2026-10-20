@@ -25,4 +25,5 @@ export {
   IDENTITY,
   scaleTransform,
   toTuple,
+  type ViewSize,
 } from "./transform.js";

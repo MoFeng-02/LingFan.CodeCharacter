@@ -5,7 +5,8 @@
  *         fingerprint 给出逐字节稳定的指令序列化串。
  * 为什么：确定性判据落在「同 state 编译两遍得到同一串」上——不依赖 canvas 位图、
  *         不依赖 GPU，也无需运行画布即可在 node 环境验收。
- * 怎么用：plan = buildDrawPlan(state, scale)；draw(ctx, plan) 执行；fingerprint(plan) 比对。
+ * 怎么用：plan = buildDrawPlan(state, view)；draw(ctx, plan) 执行；fingerprint(plan) 比对。
+ *         view 传数字 = 等比缩放（方画布）；传 ViewSize = 分轴缩放（非方形画幅）。
  * 注意事项：形状坐标保持归一化（与 state(t) 同域），画布缩放全部由 transform
  *          矩阵承担——最终像素点 = 缩放矩阵 · 节点形变 · 基元形变 · 形状点，
  *          缩放只允许出现一次；混合模式对契约外的取值必须报错（契约要求，
@@ -19,7 +20,12 @@ import type {
   RgbaColor,
   ShapePrimitive,
 } from "@lingfan-character/contracts";
-import { compose, scaleTransform, toTuple } from "./transform.js";
+import {
+  compose,
+  scaleTransform,
+  toTuple,
+  type ViewSize,
+} from "./transform.js";
 
 /** 编译后路径命令：坐标保持归一化，空间映射交给 transform。 */
 export type CompiledPathCommand =
@@ -140,10 +146,14 @@ function toCompiledShape(shape: ShapePrimitive): CompiledShape {
 /**
  * 把状态向量编译为像素绘制指令流。
  * @param state 内核求值产出的状态向量
- * @param scale 归一化坐标到画布像素的比例（画布边长 = 1 × scale）
+ * @param view 归一化坐标到画布像素的比例：数字 = 等比缩放（方画布），
+ *             或 ViewSize = 分轴缩放（非方形画幅下保真素材宽高比）
  */
-export function buildDrawPlan(state: CharacterState, scale: number): DrawPlan {
-  const scaleMatrix = scaleTransform(scale);
+export function buildDrawPlan(
+  state: CharacterState,
+  view: number | ViewSize,
+): DrawPlan {
+  const scaleMatrix = scaleTransform(view);
   const commands: DrawCommand[] = [];
   for (const nodeId of state.zOrder) {
     const node = state.nodes[nodeId];
