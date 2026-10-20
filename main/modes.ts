@@ -13,7 +13,12 @@ import {
 import { bust3dPack } from "@lingfan-character/example-bust3d";
 import { layeredPack } from "@lingfan-character/example-layered";
 import { riggedPortraitPack } from "@lingfan-character/example-rigged-portrait";
-import type { TextureResource } from "@lingfan-character/renderer-canvas2d";
+import type {
+  TextureResource,
+  ViewSize,
+} from "@lingfan-character/renderer-canvas2d";
+import { RIGGED_TEXTURE_ID } from "./placeholderRigged";
+import { setStageSize } from "./stage";
 
 export type Mode = "humanoid" | "portrait" | "bust3d" | "layered" | "rigged";
 
@@ -69,6 +74,39 @@ export function needsTexture(target: Mode): boolean {
   return target === "portrait" || target === "layered" || target === "rigged";
 }
 
+/** 画幅长边：短边按素材宽高比推导，保证不裁切也不留白。 */
+const LONG_EDGE = 512;
+
+/** 该模式对应的整图纹理标识：分层模式各层自带局部矩形，不参与画幅推导。 */
+function wholeImageTextureId(target: Mode): string | undefined {
+  if (target === "portrait") return PORTRAIT_TEXTURE;
+  if (target === "rigged") return RIGGED_TEXTURE_ID;
+  return undefined;
+}
+
+/**
+ * 推导当前模式的画幅：整图纹理按素材宽高比取长边 512，
+ * 其余模式（程序角色、立体半身、分层立绘、或纹理缺失）保持方形画幅。
+ */
+export function viewFor(target: Mode): ViewSize {
+  const id = wholeImageTextureId(target);
+  const resource = id ? textures.get(id) : undefined;
+  if (!resource || resource.width <= 0 || resource.height <= 0) {
+    return { width: LONG_EDGE, height: LONG_EDGE };
+  }
+  const aspect = resource.width / resource.height;
+  if (aspect >= 1) {
+    return { width: LONG_EDGE, height: Math.max(1, Math.round(LONG_EDGE / aspect)) };
+  }
+  return { width: Math.max(1, Math.round(LONG_EDGE * aspect)), height: LONG_EDGE };
+}
+
+/** 把当前模式的画幅落实到画布：换模式或换图后立刻生效。 */
+export function applyStageView(): void {
+  const view = viewFor(mode);
+  setStageSize(view.width, view.height);
+}
+
 /** 程序占位立绘：未选择图片时的可视基线，离屏画布现场生成。 */
 export function ensurePlaceholderTexture(): void {
   if (textures.has(PORTRAIT_TEXTURE)) return;
@@ -95,6 +133,18 @@ export function ensurePlaceholderTexture(): void {
   pen.textAlign = "center";
   pen.fillText("程序占位立绘 · 请选择图片", 256, 496);
   textures.set(PORTRAIT_TEXTURE, { image: offscreen, width: 512, height: 512 });
+}
+
+/**
+ * 接管一张真实立绘：素材立绘与单图蒙皮共用同一张图。
+ *
+ * 为什么共用：两个模式都是「一张完整立绘 + 形变」，用户的直觉是
+ * 「选了图，两个模式都换」。分层模式不能用——它按层提供局部矩形。
+ */
+export function adoptPortraitImage(resource: TextureResource): void {
+  registerTexture(PORTRAIT_TEXTURE, resource);
+  registerTexture(RIGGED_TEXTURE_ID, resource);
+  applyStageView();
 }
 
 /** 模式按钮与各面板显隐接线，含立绘图片文件选择。 */
@@ -125,6 +175,7 @@ export function wireModes(): void {
     document
       .querySelector<HTMLElement>("#panel-rigged")
       ?.classList.toggle("hidden", next !== "rigged");
+    applyStageView();
   }
 
   for (const button of modeButtons) {
@@ -134,15 +185,21 @@ export function wireModes(): void {
     });
   }
 
+  wireImagePicker("#portrait-file");
+  wireImagePicker("#rigged-file");
+}
+
+/** 图片选择框接线：解码成功后同时接管素材立绘与单图蒙皮两张纹理。 */
+function wireImagePicker(selector: string): void {
   document
-    .querySelector<HTMLInputElement>("#portrait-file")
+    .querySelector<HTMLInputElement>(selector)
     ?.addEventListener("change", async (event) => {
       const input = event.currentTarget as HTMLInputElement | null;
       const file = input?.files?.[0];
       if (!file) return;
       try {
         const bitmap = await createImageBitmap(file);
-        registerTexture(PORTRAIT_TEXTURE, {
+        adoptPortraitImage({
           image: bitmap,
           width: bitmap.width,
           height: bitmap.height,

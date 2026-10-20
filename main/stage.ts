@@ -18,6 +18,21 @@ export const stage: HTMLCanvasElement = canvas;
 export const ctx: CanvasRenderingContext2D = context;
 export const status: HTMLElement | null = statusElement;
 
+/**
+ * 调整画布位图尺寸：模式或素材宽高比变化时调用。
+ *
+ * 为什么要改：归一化方域 [0,1]² 要铺满非方形画幅，画布本身就必须是
+ * 那个宽高比，否则素材被拉伸。尺寸未变时直接返回——重置 canvas 位图
+ * 会清空画面并让下一帧多一次全量重绘。
+ */
+export function setStageSize(width: number, height: number): void {
+  const w = Math.max(1, Math.round(width));
+  const h = Math.max(1, Math.round(height));
+  if (stage.width === w && stage.height === h) return;
+  stage.width = w;
+  stage.height = h;
+}
+
 /** DOM 上下文到渲染器最小执行接口的适配：属性写入原样传导到画布。 */
 export const drawingTarget: DrawingContext = {
   get globalCompositeOperation() {

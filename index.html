@@ -24,6 +24,12 @@
         border: 1px solid #2a323c;
         border-radius: 12px;
         background: #14181e;
+        /* 画布位图尺寸由模式与素材宽高比决定，竖向画幅可能高出视口，
+           因此显示尺寸只做等比收缩；位图坐标仍是画布里那套，锚点与网格不受影响。 */
+        max-width: 92vw;
+        max-height: 66vh;
+        width: auto;
+        height: auto;
       }
       #panel {
         display: flex;
@@ -259,6 +265,10 @@
         <label>风
           <input type="range" min="0" max="1" step="0.01" value="0.12"
                  data-param="rigged.params.wind" />
+        </label>
+        <label style="font-size: 12px; color: #8a94a3;">立绘图片
+          <input type="file" id="rigged-file" accept="image/*"
+                 style="font-size: 12px; max-width: 160px;" />
         </label>
       </section>
     </main>
