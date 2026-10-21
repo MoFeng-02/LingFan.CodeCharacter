@@ -56,28 +56,5 @@ export function skinVertices(
   return skinned;
 }
 
-/**
- * 眼带纵向压缩：单图没有眼睑层，只能用几何压缩表达「眯眼」。
- * 作用域是椭圆权重，闭眼方向把眼带内顶点向上压向眼带中线。
- * 这是本方案最弱的一环——真实闭眼需要分层素材，此处只做观感近似。
- */
-export function squeezeEyeBand(
-  points: readonly NormalizedPoint[],
-  blink: number,
-  band: { x: number; y: number; rx: number; ry: number },
-  squeeze: number,
-): NormalizedPoint[] {
-  if (blink === 0) return [...points];
-  return points.map((point) => {
-    const dx = (point.x - band.x) / band.rx;
-    const dy = (point.y - band.y) / band.ry;
-    const q = 1 - dx * dx - dy * dy;
-    if (q <= 0) return point;
-    // 压缩向眼带中线靠拢：越靠上下缘压缩越强，中线附近不动。
-    const pull = q * blink * squeeze;
-    return {
-      x: point.x,
-      y: point.y + (band.y - point.y) * pull,
-    };
-  });
-}
+/** 开眼/闭眼两态之间是否已经可以省掉一条基元的最小不透明度。 */
+export const OPAQUE_EPSILON = 1e-4;

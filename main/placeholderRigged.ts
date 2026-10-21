@@ -78,13 +78,14 @@ function paintPortrait(pen: CanvasRenderingContext2D): void {
   fillEllipse(pen, SKIN, 0.5, 0.115, 0.082, 0.075);
   fillEllipse(pen, SKIN, 0.5, 0.15, 0.075, 0.06);
 
-  // 五官：眉、眼、鼻、唇。眼线固定在 0.136，与 EYE_BAND 同心。
-  fillRect(pen, HAIR, 0.455, 0.128, 0.035, 0.003);
-  fillRect(pen, HAIR, 0.51, 0.128, 0.035, 0.003);
-  fillEllipse(pen, "#fbf8f3", 0.472, 0.136, 0.016, 0.007);
-  fillEllipse(pen, "#fbf8f3", 0.528, 0.136, 0.016, 0.007);
-  fillEllipse(pen, EYE, 0.472, 0.136, 0.006, 0.006);
-  fillEllipse(pen, EYE, 0.528, 0.136, 0.006, 0.006);
+  // 五官：眉、眼、鼻、唇。左右眼中心与配方声明的眼裂取样框对齐，
+  // 因此真实立绘与占位图走同一条闭眼纹理派生路径。
+  fillRect(pen, HAIR, 0.455, 0.126, 0.038, 0.003);
+  fillRect(pen, HAIR, 0.516, 0.126, 0.038, 0.003);
+  fillEllipse(pen, "#fbf8f3", 0.478, 0.137, 0.018, 0.008);
+  fillEllipse(pen, "#fbf8f3", 0.549, 0.137, 0.018, 0.008);
+  fillEllipse(pen, EYE, 0.478, 0.137, 0.007, 0.007);
+  fillEllipse(pen, EYE, 0.549, 0.137, 0.007, 0.007);
   fillEllipse(pen, SKIN_SHADE, 0.5, 0.157, 0.005, 0.008);
   fillEllipse(pen, LIP, 0.5, 0.168, 0.013, 0.005);
 

@@ -12,11 +12,16 @@ import {
 } from "@lingfan-character/example-portrait";
 import { bust3dPack } from "@lingfan-character/example-bust3d";
 import { layeredPack } from "@lingfan-character/example-layered";
-import { riggedPortraitPack } from "@lingfan-character/example-rigged-portrait";
+import {
+  CLOSED_TEXTURE_ID,
+  EYE_SLITS,
+  riggedPortraitPack,
+} from "@lingfan-character/example-rigged-portrait";
 import type {
   TextureResource,
   ViewSize,
 } from "@lingfan-character/renderer-canvas2d";
+import { buildClosedEyesTexture } from "./closedEyes";
 import { RIGGED_TEXTURE_ID } from "./placeholderRigged";
 import { setStageSize } from "./stage";
 
@@ -136,6 +141,17 @@ export function ensurePlaceholderTexture(): void {
 }
 
 /**
+ * 登记单图蒙皮的两张纹理：开眼图与由它派生的闭眼图。
+ *
+ * 为什么成对登记：配方按眨眼量在两层之间交叉淡入，缺任一张都会让另一态
+ * 无法显示。闭眼图由开眼图派生，两张除眼区外逐像素相同，淡入只影响眼区。
+ */
+export function registerRiggedTextures(source: TextureResource): void {
+  registerTexture(RIGGED_TEXTURE_ID, source);
+  registerTexture(CLOSED_TEXTURE_ID, buildClosedEyesTexture(source, EYE_SLITS));
+}
+
+/**
  * 接管一张真实立绘：素材立绘与单图蒙皮共用同一张图。
  *
  * 为什么共用：两个模式都是「一张完整立绘 + 形变」，用户的直觉是
@@ -143,7 +159,7 @@ export function ensurePlaceholderTexture(): void {
  */
 export function adoptPortraitImage(resource: TextureResource): void {
   registerTexture(PORTRAIT_TEXTURE, resource);
-  registerTexture(RIGGED_TEXTURE_ID, resource);
+  registerRiggedTextures(resource);
   applyStageView();
 }
 

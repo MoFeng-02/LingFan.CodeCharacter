@@ -7,7 +7,7 @@ import {
   BONE_ANCHOR,
   BONE_ORDER,
   BONE_RADIUS,
-  EYE_BAND,
+  CLOSED_TEXTURE_ID,
   GRID_COLS,
   GRID_ROWS,
   SLOT,
@@ -17,7 +17,6 @@ import {
   restGrid,
   riggedPortraitPack,
   skinVertices,
-  squeezeEyeBand,
   surfaceNode,
   type SlotId,
 } from "@lingfan-character/example-rigged-portrait";
@@ -32,7 +31,7 @@ import { describe, expect, it } from "vitest";
  * 单图蒙皮判据：恒等性、权重归一、区域分离、链段延迟与确定性。
  * 核心不变量是「一张图只有一份像素」——顶点怎么动，贴图都按网格
  * 线性变形，因此形变连续、不会出现分层方案里的层间裂缝；
- * 代价是失去层间解耦（闭眼只能压缩眼区）。
+ * 眨眼由开眼/闭眼两张同尺寸纹理交叉淡入完成，顶点本身不动。
  */
 
 const SCALE = 512;
@@ -164,30 +163,51 @@ describe("单图权重蒙皮", () => {
     expect(skirtShift).toBeLessThan(chestRise * 0.2);
   });
 
-  it("眨眼只压缩眼带内部，带外顶点不动", () => {
-    // 纯函数验证：眼带外的顶点在压缩前后逐字节相同。
-    const points = restGrid();
-    const squeezed = squeezeEyeBand(points, 1, EYE_BAND, 0.55);
-    const inside = (point: NormalizedPoint): boolean => {
-      const dx = (point.x - EYE_BAND.x) / EYE_BAND.rx;
-      const dy = (point.y - EYE_BAND.y) / EYE_BAND.ry;
-      return 1 - dx * dx - dy * dy > 0;
-    };
-    let movedInside = 0;
-    for (let index = 0; index < points.length; index += 1) {
-      const point = points[index]!;
-      const moved = squeezed[index]!;
-      if (inside(point)) {
-        const before = Math.abs(point.y - EYE_BAND.y);
-        const after = Math.abs(moved.y - EYE_BAND.y);
-        // 眼带内：向中线靠拢（压缩），横坐标不变。
-        if (after < before - 1e-12) movedInside += 1;
-        expect(moved.x).toBe(point.x);
-      } else {
-        expect(moved.y).toBe(point.y);
-      }
+  it("睁眼时只出一条开眼基元，闭眼时只出一条闭眼基元", async () => {
+    // 两态纹理除眼区外逐像素相同，因此不透明度为零的一层不必绘制；
+    // 裁剪掉零权重层让满睁与满闭的填充量都与改造前单层持平。
+    const open = await stateAt(1200, STILL);
+    const openPrimitives = open.nodes[surfaceNode.id]!.primitives;
+    expect(openPrimitives).toHaveLength(1);
+    expect((openPrimitives[0]!.shape as MeshPrimitive).textureId).toBe(
+      TEXTURE_ID,
+    );
+    expect(openPrimitives[0]!.opacity).toBe(1);
+
+    const closed = await stateAt(1200, { ...STILL, [SLOT.blink]: 1 });
+    const closedPrimitives = closed.nodes[surfaceNode.id]!.primitives;
+    expect(closedPrimitives).toHaveLength(1);
+    expect((closedPrimitives[0]!.shape as MeshPrimitive).textureId).toBe(
+      CLOSED_TEXTURE_ID,
+    );
+    expect(closedPrimitives[0]!.opacity).toBe(1);
+  });
+
+  it("半闭时底层保持不透明，闭眼层按眨眼量叠上去", async () => {
+    // 底层必须是满不透明：网格逐单元切块绘制，两层都半透明会让接缝
+    // 透出底色，身体上浮出格线。闭眼图除眼区外与开眼图逐像素相同，
+    // 因此上层只在眼区产生可察觉的变化。
+    const half = await stateAt(1200, { ...STILL, [SLOT.blink]: 0.35 });
+    const primitives = half.nodes[surfaceNode.id]!.primitives;
+    expect(primitives).toHaveLength(2);
+
+    const [baseLayer, closedLayer] = primitives as [
+      (typeof primitives)[number],
+      (typeof primitives)[number],
+    ];
+    expect((baseLayer.shape as MeshPrimitive).textureId).toBe(TEXTURE_ID);
+    expect(baseLayer.opacity).toBe(1);
+    expect((closedLayer.shape as MeshPrimitive).textureId).toBe(
+      CLOSED_TEXTURE_ID,
+    );
+    expect(closedLayer.opacity).toBeCloseTo(0.35, 12);
+
+    const openVertices = (baseLayer.shape as MeshPrimitive).vertices;
+    const closedVertices = (closedLayer.shape as MeshPrimitive).vertices;
+    for (let index = 0; index < openVertices.length; index += 1) {
+      expect(closedVertices[index]!.x).toBe(openVertices[index]!.x);
+      expect(closedVertices[index]!.y).toBe(openVertices[index]!.y);
     }
-    expect(movedInside).toBeGreaterThan(0);
   });
 
   it("链段延迟：脉冲触发瞬间发已动、裙摆尚未响应", () => {

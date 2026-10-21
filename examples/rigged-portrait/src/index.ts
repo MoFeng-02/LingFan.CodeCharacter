@@ -20,11 +20,10 @@ export {
   type WeightRow,
   type WeightTable,
 } from "./weights";
-export { skinVertices, squeezeEyeBand } from "./skin";
+export { OPAQUE_EPSILON, skinVertices } from "./skin";
 export { boneTransforms, type BoneInputs } from "./bones";
 export { breathPhase } from "./rhythm";
 export {
-  BLINK_SQUEEZE,
   BONE,
   BONE_ANCHOR,
   BONE_ORDER,
@@ -32,8 +31,9 @@ export {
   BREATH_LIFT,
   BREATH_PERIOD_MS,
   CHEST_SWING,
+  CLOSED_TEXTURE_ID,
   DEFAULTS,
-  EYE_BAND,
+  EYE_SLITS,
   GRID_COLS,
   GRID_ROWS,
   HEAD_SWING,
@@ -46,5 +46,6 @@ export {
   TEXTURE_ID,
   WIND_NOISE,
   type BoneId,
+  type EyeSlit,
   type SlotId,
 } from "./shared";

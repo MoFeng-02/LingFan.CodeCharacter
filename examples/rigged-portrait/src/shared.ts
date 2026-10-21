@@ -171,17 +171,37 @@ export const SKIRT_SWING = 0.0035;
 /** 满朝向时的头部微旋转（弧度）：单图大幅旋转会穿帮，只做极小倾斜。 */
 export const HEAD_TILT_RAD = 0.018;
 
-/** 眨眼：眼带纵向压缩比例上限（单图没有眼睑层，只能压缩眼区）。 */
-export const BLINK_SQUEEZE = 0.55;
+/**
+ * 闭眼态纹理标识：与开眼图同尺寸，只有眼区不同。
+ *
+ * 为什么单独一张：眼裂在这个画幅里只有几个像素高，靠顶点形变合眼
+ * 要把两侧皮肤挤过来，而网格分辨率远低于眼裂——位移差会剪坏单元，
+ * 画面出现斜向色带。眼皮的像素应当由素材给出，顶点只负责形变。
+ */
+export const CLOSED_TEXTURE_ID = "rigged-portrait-closed";
+
+/** 眼裂取样框：整图归一化坐标下的矩形，左上角加宽高。 */
+export interface EyeSlit {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
 
 /**
- * 眼带中心与半径：眨眼压缩的作用域。
+ * 眼裂取样框：左右各一枚，归一化到整图。
  *
- * 眼线落在头锚点之下约画高百分之二处，横向略窄于面部轮廓，
- * 故 rx 取面部半宽的六成、ry 取小于一行的窄带——只压缩眼线那一行
- * 附近的顶点，避免连面颊一起塌陷。
+ * 怎么用：组合根按这组矩形从素材派生闭眼纹理——框内逐列取本列的皮肤色
+ * 盖住眼裂，再沿框的下缘压一条睫毛线。
+ *
+ * 注意事项：框要刚好圈住眼裂并向上下各留一点余量，既覆盖上下眼睑，也让
+ * 逐列取样落在眼周的皮肤上；太宽会把眉与鼻梁一起卷进来，太窄盖不住眼角。
+ * 两枚分开声明，避免框跨过鼻梁。
  */
-export const EYE_BAND = { x: 0.52, y: 0.136, rx: 0.05, ry: 0.014 } as const;
+export const EYE_SLITS: readonly EyeSlit[] = [
+  { x: 0.452, y: 0.1275, width: 0.052, height: 0.02 },
+  { x: 0.521, y: 0.1275, width: 0.055, height: 0.02 },
+];
 
 /** 张嘴：下颌下移量上限（归一化）：约 1/110 画高，读作说话而非大张口。 */
 export const JAW_DROP = 0.009;
